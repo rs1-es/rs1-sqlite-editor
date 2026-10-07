@@ -259,6 +259,10 @@ table.data th.sorted .sort-arrow::after {
 
 table.data th.sorted.desc .sort-arrow::after { content: '▼'; }
 
+table.data tr:hover {
+  background-color: #000055;
+}
+
 table.data th small { display: block; font-weight: 400; color: var(--muted); }
 
 td.rowid, th.rowid { color: var(--muted); text-align: right; background: var(--surface-alt); }
