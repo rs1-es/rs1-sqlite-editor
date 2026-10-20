@@ -10,7 +10,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="alternate icon" href="favicon.ico" type="image/x-icon" sizes="16x16 32x32 48x48">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=20261020">
   <script>
     (function () {
       var t = localStorage.getItem('rs1-theme');
@@ -28,12 +28,14 @@
     <input type="file" id="file-input" accept=".sqlite,.sqlite3,.db,.db3" hidden>
     <button id="btn-theme" data-i18n-title="themeTooltip" title="Toggle dark / light mode">🌙</button>
     <button id="btn-lang" title="Change language">ES</button>
+    <button id="btn-new" disabled data-i18n="newBtn">New database</button>
     <button id="btn-open" class="primary" data-i18n="openBtn">Open database</button>
     <button id="btn-export" disabled data-i18n="exportBtn">Export</button>
   </header>
 
   <div id="app">
     <aside id="sidebar">
+      <button id="btn-new-table" disabled data-i18n="newTableBtn">+ New table</button>
       <div id="schema-list"></div>
     </aside>
 
@@ -84,7 +86,41 @@
     <span class="footer-info" data-i18n="footerInfo">This web page was created with the help of artificial intelligence. Contact: <a href="mailto:admin@rs1.es">admin@rs1.es</a></span>
   </footer>
 
+  <dialog id="table-dialog">
+    <form id="table-form" autocomplete="off">
+      <h2 data-i18n="newTableTitle">Create table</h2>
+      <label class="field">
+        <span data-i18n="tableName">Table name</span>
+        <input id="nt-name" type="text" spellcheck="false">
+      </label>
+      <div id="nt-cols-wrap">
+        <table id="nt-cols">
+          <thead>
+            <tr>
+              <th data-i18n="colName">Column</th>
+              <th data-i18n="colType">Type</th>
+              <th title="PRIMARY KEY">PK</th>
+              <th title="AUTOINCREMENT">AI</th>
+              <th title="NOT NULL">NN</th>
+              <th title="UNIQUE">UQ</th>
+              <th data-i18n="defaultVal">Default</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button type="button" id="nt-add-col" data-i18n="addColumn">+ Add column</button>
+      <pre id="nt-preview"></pre>
+      <p id="nt-error" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" id="nt-cancel" data-i18n="cancelAdd">Cancel</button>
+        <button type="submit" class="primary" data-i18n="createBtn">Create table</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20261020"></script>
 </body>
 </html>

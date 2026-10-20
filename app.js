@@ -29,7 +29,7 @@ const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
 
 const I18N = {
   en: {
-    ready: 'Ready. Open a .sqlite or .db file',
+    ready: 'Ready. Open a .sqlite or .db file, or create a new database',
     wasmFail: 'Could not load sql.js (is there an internet connection?): {0}',
     loaded: '{0} loaded ({1} objects)',
     openFail: 'Could not open the file: {0}',
@@ -60,12 +60,30 @@ const I18N = {
     csvTooltip: 'Download the current listing as a CSV file',
     csvExported: 'CSV exported as {0}',
     sortHint: 'Sort by this column',
+    newDbPrompt: 'File name for the new database:',
+    newDbDefault: 'new_database.sqlite',
+    newDbCreated: 'New database {0} created. Add a table with “+ New table” or from the SQL tab.',
+    confirmDiscard: 'The current database has unsaved changes. Discard them and create a new database?',
+    newDbFail: 'Could not create the database: {0}',
+    tableCreated: 'Table {0} created.',
+    needTableName: 'Enter a table name.',
+    needColumns: 'Add at least one column with a name.',
+    removeColumn: 'Remove column',
     // HTML
+    newBtn: 'New database',
+    newTableBtn: '+ New table',
+    newTableTitle: 'Create table',
+    tableName: 'Table name',
+    colName: 'Column',
+    colType: 'Type',
+    defaultVal: 'Default',
+    addColumn: '+ Add column',
+    createBtn: 'Create table',
     openBtn: 'Open database',
     exportBtn: 'Export',
     tabData: 'Data',
     tabSql: 'SQL',
-    welcome1: 'Drop a <b>.sqlite / .db</b> file here or click <b>Open database</b>.',
+    welcome1: 'Drop a <b>.sqlite / .db</b> file here, click <b>Open database</b>, or create a <b>New database</b>.',
     welcome2: 'Changes are kept in memory; use <b>Export</b> to download the modified database.',
     addRow: '+ Add row',
     readonlyNote: 'Read-only object: views and WITHOUT ROWID tables cannot be edited.',
@@ -82,7 +100,7 @@ const I18N = {
     themeTooltip: 'Toggle dark / light mode',
   },
   es: {
-    ready: 'Listo. Abre un archivo .sqlite o .db',
+    ready: 'Listo. Abre un archivo .sqlite o .db, o crea una base de datos nueva',
     wasmFail: 'No se pudo cargar sql.js (¿hay conexión a internet?): {0}',
     loaded: '{0} cargada ({1} objetos)',
     openFail: 'No se pudo abrir el archivo: {0}',
@@ -113,12 +131,30 @@ const I18N = {
     csvTooltip: 'Descargar el listado actual como archivo CSV',
     csvExported: 'CSV exportado como {0}',
     sortHint: 'Ordenar por esta columna',
+    newDbPrompt: 'Nombre de archivo para la nueva base de datos:',
+    newDbDefault: 'nueva_base.sqlite',
+    newDbCreated: 'Base de datos {0} creada. Añade una tabla con «+ Nueva tabla» o desde la pestaña SQL.',
+    confirmDiscard: 'La base de datos actual tiene cambios sin exportar. ¿Descartarlos y crear una base nueva?',
+    newDbFail: 'No se pudo crear la base de datos: {0}',
+    tableCreated: 'Tabla {0} creada.',
+    needTableName: 'Indica un nombre para la tabla.',
+    needColumns: 'Añade al menos una columna con nombre.',
+    removeColumn: 'Quitar columna',
     // HTML
+    newBtn: 'Nueva base de datos',
+    newTableBtn: '+ Nueva tabla',
+    newTableTitle: 'Crear tabla',
+    tableName: 'Nombre de la tabla',
+    colName: 'Columna',
+    colType: 'Tipo',
+    defaultVal: 'Valor por defecto',
+    addColumn: '+ Añadir columna',
+    createBtn: 'Crear tabla',
     openBtn: 'Abrir base de datos',
     exportBtn: 'Exportar',
     tabData: 'Datos',
     tabSql: 'SQL',
-    welcome1: 'Arrastra un archivo <b>.sqlite / .db</b> aquí o pulsa <b>Abrir base de datos</b>.',
+    welcome1: 'Arrastra un archivo <b>.sqlite / .db</b> aquí, pulsa <b>Abrir base de datos</b> o crea una <b>Nueva base de datos</b>.',
     welcome2: 'Los cambios se guardan en memoria; usa <b>Exportar</b> para descargar la base modificada.',
     addRow: '+ Añadir registro',
     readonlyNote: 'Objeto de solo lectura: las vistas y las tablas WITHOUT ROWID no se pueden editar.',
@@ -196,35 +232,71 @@ $('btn-theme').addEventListener('click', () => {
 async function init() {
   try {
     SQL = await initSqlJs({ locateFile: f => CDN + f });
+    $('btn-new').disabled = false;
     setStatus(() => t('ready'));
   } catch (e) {
     setStatus(() => t('wasmFail', e.message), true);
   }
 }
 
+/* Pone una base de datos (abierta o nueva) como la activa y reinicia la interfaz */
+function useDatabase(newDb, data, name) {
+  if (db) db.close();
+  db = newDb;
+  originalData = data;
+  fileName = name;
+  current = null;
+  addRowActive = false;
+  addDraft = [];
+  $('btn-export').disabled = false;
+  $('btn-new-table').disabled = false;
+  $('tab-data').disabled = false;
+  $('tab-sql').disabled = false;
+  refreshSchema();
+  $('sidebar').classList.add('open');
+  switchTab('data');
+  $('welcome').hidden = false;
+  $('table-view').hidden = true;
+  $('sql-view').hidden = true;
+}
+
 function openFile(file) {
   return file.arrayBuffer().then(buf => {
     try {
-      if (db) db.close();
-      originalData = new Uint8Array(buf);
-      db = new SQL.Database(originalData);
-      fileName = file.name || 'base.sqlite';
-      current = null;
-      $('btn-export').disabled = false;
-      $('tab-data').disabled = false;
-      $('tab-sql').disabled = false;
-      refreshSchema();
-      $('sidebar').classList.add('open');
-      switchTab('data');
-      $('welcome').hidden = false;
-      $('table-view').hidden = true;
-      $('sql-view').hidden = true;
+      const data = new Uint8Array(buf);
+      const newDb = new SQL.Database(data);
+      // comprueba que es una base válida antes de reemplazar la actual
+      newDb.exec('SELECT 1 FROM sqlite_master LIMIT 1');
+      useDatabase(newDb, data, file.name || 'base.sqlite');
       setStatus(() => t('loaded', fileName, objects.length));
     } catch (e) {
       setStatus(() => t('openFail', e.message), true);
     }
   });
 }
+
+/* ---------- Nueva base de datos ---------- */
+
+function newDatabase() {
+  if (!SQL) return;
+  if (hasUnsavedChanges() && !confirm(t('confirmDiscard'))) return;
+  let name = prompt(t('newDbPrompt'), t('newDbDefault'));
+  if (name === null) return;
+  name = name.trim().replace(/[\\/:*?"<>|]/g, '_') || t('newDbDefault');
+  if (!/\.(sqlite3?|db3?)$/i.test(name)) name += '.sqlite';
+  try {
+    const newDb = new SQL.Database();
+    // Crear y borrar una tabla temporal fuerza que el archivo tenga cabecera SQLite
+    // válida aunque el usuario lo exporte sin haber creado nada.
+    newDb.run('CREATE TABLE _tmp(x); DROP TABLE _tmp;');
+    useDatabase(newDb, newDb.export(), name);
+    setStatus(() => t('newDbCreated', name));
+  } catch (e) {
+    setStatus(() => t('newDbFail', e.message), true);
+  }
+}
+
+$('btn-new').addEventListener('click', newDatabase);
 
 /* ---------- Esquema (tablas y vistas) ---------- */
 
@@ -698,6 +770,127 @@ $('btn-clear-sql').addEventListener('click', () => {
 });
 $('sql-input').addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runSQL(); }
+});
+
+/* ---------- Creador visual de tablas ---------- */
+
+const COL_TYPES = ['INTEGER', 'TEXT', 'REAL', 'NUMERIC', 'BLOB'];
+const ntBody = $('nt-cols').tBodies[0];
+
+function ntAddColumn(def = {}) {
+  const tr = ntBody.insertRow();
+  const type = def.type || 'TEXT';
+  tr.innerHTML =
+    `<td><input class="c-name" type="text" spellcheck="false" value="${esc(def.name || '')}"></td>` +
+    `<td><select class="c-type">${COL_TYPES.map(x =>
+      `<option${x === type ? ' selected' : ''}>${x}</option>`).join('')}</select></td>` +
+    `<td><input class="c-pk" type="checkbox"${def.pk ? ' checked' : ''}></td>` +
+    `<td><input class="c-ai" type="checkbox"${def.ai ? ' checked' : ''}></td>` +
+    `<td><input class="c-nn" type="checkbox"></td>` +
+    `<td><input class="c-uq" type="checkbox"></td>` +
+    `<td><input class="c-def" type="text" spellcheck="false"></td>` +
+    `<td><button type="button" class="del c-rm" title="${esc(t('removeColumn'))}">✕</button></td>`;
+}
+
+function ntReadColumns() {
+  return [...ntBody.rows].map(tr => ({
+    name: tr.querySelector('.c-name').value.trim(),
+    type: tr.querySelector('.c-type').value,
+    pk: tr.querySelector('.c-pk').checked,
+    ai: tr.querySelector('.c-ai').checked,
+    nn: tr.querySelector('.c-nn').checked,
+    uq: tr.querySelector('.c-uq').checked,
+    def: tr.querySelector('.c-def').value.trim()
+  }));
+}
+
+/* AUTOINCREMENT solo es válido en una única columna INTEGER PRIMARY KEY */
+function ntSync() {
+  const rows = [...ntBody.rows];
+  const pkCount = rows.filter(tr => tr.querySelector('.c-pk').checked).length;
+  for (const tr of rows) {
+    const ai = tr.querySelector('.c-ai');
+    const ok = pkCount === 1 && tr.querySelector('.c-pk').checked &&
+      tr.querySelector('.c-type').value === 'INTEGER';
+    ai.disabled = !ok;
+    if (!ok) ai.checked = false;
+  }
+  $('nt-preview').textContent = ntBuildSql($('nt-name').value.trim() || '…',
+    ntReadColumns().filter(c => c.name));
+}
+
+function ntDefaultLiteral(c) {
+  const v = c.def;
+  if (/^[-+]?\d+(\.\d+)?$/.test(v) && c.type !== 'TEXT' && c.type !== 'BLOB') return v;
+  if (/^(NULL|CURRENT_TIMESTAMP|CURRENT_DATE|CURRENT_TIME)$/i.test(v)) return v.toUpperCase();
+  return "'" + v.replace(/'/g, "''") + "'";
+}
+
+function ntBuildSql(tableName, cols) {
+  const pks = cols.filter(c => c.pk);
+  const single = pks.length === 1;
+  const lines = cols.map(c => {
+    let s = qi(c.name) + ' ' + c.type;
+    if (single && c.pk) {
+      s += ' PRIMARY KEY';
+      if (c.ai && c.type === 'INTEGER') s += ' AUTOINCREMENT';
+    }
+    if (c.nn) s += ' NOT NULL';
+    if (c.uq && !c.pk) s += ' UNIQUE';
+    if (c.def !== '') s += ' DEFAULT ' + ntDefaultLiteral(c);
+    return s;
+  });
+  if (pks.length > 1) lines.push('PRIMARY KEY (' + pks.map(c => qi(c.name)).join(', ') + ')');
+  return `CREATE TABLE ${qi(tableName)} (\n  ${lines.join(',\n  ')}\n);`;
+}
+
+function ntError(msg) {
+  const el = $('nt-error');
+  el.textContent = msg || '';
+  el.hidden = !msg;
+}
+
+function openTableDialog() {
+  if (!db) return;
+  $('nt-name').value = '';
+  ntBody.innerHTML = '';
+  ntAddColumn({ name: 'id', type: 'INTEGER', pk: true, ai: true });
+  ntAddColumn();
+  ntError('');
+  ntSync();
+  $('table-dialog').showModal();
+  $('nt-name').focus();
+}
+
+$('btn-new-table').addEventListener('click', openTableDialog);
+$('nt-add-col').addEventListener('click', () => { ntAddColumn(); ntSync(); });
+$('nt-cancel').addEventListener('click', () => $('table-dialog').close());
+$('table-dialog').addEventListener('input', ntSync);
+$('table-dialog').addEventListener('change', ntSync);
+
+ntBody.addEventListener('click', e => {
+  const rm = e.target.closest('button.c-rm');
+  if (!rm) return;
+  rm.closest('tr').remove();
+  ntSync();
+});
+
+$('table-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('nt-name').value.trim();
+  const cols = ntReadColumns().filter(c => c.name);
+  if (!name) { ntError(t('needTableName')); return; }
+  if (!cols.length) { ntError(t('needColumns')); return; }
+  try {
+    db.run(ntBuildSql(name, cols));
+  } catch (err) {
+    ntError(err.message);
+    return;
+  }
+  $('table-dialog').close();
+  refreshSchema();
+  showObject(name, 'table');
+  setStatus(() => t('tableCreated', name));
 });
 
 /* ---------- Pestañas ---------- */

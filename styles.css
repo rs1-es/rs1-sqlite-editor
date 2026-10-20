@@ -11,6 +11,7 @@
   --surface: #eef2f7;
   --surface-alt: #fafbfc;
   --active-bg: #e8effd;
+  --row-hover: #eef3fb;
   --ok: #15803d;
   --notice-bg: #f0fdf4;
   --notice-border: #bbf7d0;
@@ -30,6 +31,7 @@
   --surface: #232b34;
   --surface-alt: #171c22;
   --active-bg: #1e3a5f;
+  --row-hover: #26303b;
   --ok: #4ade80;
   --notice-bg: #132a1c;
   --notice-border: #265e3d;
@@ -260,7 +262,7 @@ table.data th.sorted .sort-arrow::after {
 table.data th.sorted.desc .sort-arrow::after { content: '▼'; }
 
 table.data tr:hover {
-  background-color: #000055;
+  background-color: var(--row-hover);
 }
 
 table.data th small { display: block; font-weight: 400; color: var(--muted); }
@@ -358,6 +360,73 @@ button.del:hover { text-decoration: underline; color: var(--danger); }
   font-size: 11px;
   padding: 2px 8px;
 }
+
+/* ---------- Diálogo: nueva tabla ---------- */
+
+#btn-new-table { width: 100%; margin-bottom: 6px; }
+
+dialog {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  width: min(780px, 95vw);
+}
+
+dialog::backdrop { background: rgba(0, 0, 0, .5); }
+
+dialog h2 { margin: 0 0 12px; font-size: 16px; }
+
+dialog .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+
+dialog input[type="text"], dialog select {
+  font: inherit;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+dialog input:focus, dialog select:focus { outline: 2px solid var(--accent); }
+
+#nt-cols-wrap { overflow-x: auto; margin-bottom: 8px; }
+
+#nt-cols { border-collapse: collapse; width: 100%; }
+
+#nt-cols th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--muted);
+  padding: 2px 4px;
+  white-space: nowrap;
+}
+
+#nt-cols td { padding: 3px 4px; }
+
+#nt-cols td input[type="text"] { width: 100%; min-width: 90px; }
+
+#nt-cols td:nth-child(n+3):nth-child(-n+6),
+#nt-cols th:nth-child(n+3):nth-child(-n+6) { text-align: center; }
+
+#nt-preview {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  max-height: 180px;
+  overflow: auto;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+#nt-error { margin: 8px 0 0; color: var(--danger); white-space: pre-wrap; }
+
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
 /* ---------- Barra de estado ---------- */
 
@@ -468,6 +537,8 @@ body.dragging::after {
   .pager button { padding: 10px 14px; }
 
   #sql-input { height: 110px; font-size: 16px; }
+
+  dialog input[type="text"], dialog select { font-size: 16px; }
 
   #sql-results table.data th, #sql-results table.data td { max-width: 220px; }
 }
