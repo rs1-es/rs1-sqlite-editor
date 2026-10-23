@@ -40,6 +40,8 @@
 
 * { box-sizing: border-box; }
 
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   height: 100%;
@@ -269,7 +271,11 @@ table.data th small { display: block; font-weight: 400; color: var(--muted); }
 
 td.rowid, th.rowid { color: var(--muted); text-align: right; background: var(--surface-alt); }
 
+#table-container .error { color: var(--danger); padding: 8px 10px; white-space: pre-wrap; }
+
 td.cell { cursor: text; min-width: 40px; }
+
+td.cell[data-locked] { cursor: default; }
 
 td.cell[contenteditable="true"] {
   outline: 2px solid var(--accent);
@@ -314,14 +320,6 @@ button.del {
 
 button.del:hover { text-decoration: underline; color: var(--danger); }
 
-.pager {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 10px;
-}
-
 /* ---------- Consola SQL ---------- */
 
 #sql-view { display: none; flex-direction: column; }
@@ -363,7 +361,10 @@ button.del:hover { text-decoration: underline; color: var(--danger); }
 
 /* ---------- Diálogo: nueva tabla ---------- */
 
-#btn-new-table { width: 100%; margin-bottom: 6px; }
+#btn-new-table, #btn-import-csv { width: 100%; margin-bottom: 6px; }
+
+#btn-drop { color: var(--danger); }
+#btn-drop:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
 
 dialog {
   background: var(--panel);
@@ -376,7 +377,25 @@ dialog {
 
 dialog::backdrop { background: rgba(0, 0, 0, .5); }
 
+dialog { max-height: 90vh; overflow: auto; }
+
 dialog h2 { margin: 0 0 12px; font-size: 16px; }
+
+dialog h3 { margin: 14px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+dialog .check { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+dialog .check.inline { display: inline-flex; margin: 0; }
+
+.inline-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.inline-form input[type="text"] { min-width: 110px; }
+
+.tbl-scroll { max-height: 220px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.tbl-scroll table.data { border: none; }
+#struct-dialog td button { padding: 2px 6px; }
+#struct-dialog td.nowrap { white-space: nowrap; }
+
+#csv-preview { max-height: 170px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
+#csv-preview:empty { display: none; }
 
 dialog .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
 
@@ -424,7 +443,7 @@ dialog input:focus, dialog select:focus { outline: 2px solid var(--accent); }
   border-radius: 6px;
 }
 
-#nt-error { margin: 8px 0 0; color: var(--danger); white-space: pre-wrap; }
+#nt-error, #csv-error, #struct-error { margin: 8px 0 0; color: var(--danger); white-space: pre-wrap; }
 
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
@@ -531,10 +550,6 @@ body.dragging::after {
   }
 
   td.cell[contenteditable="true"] { font-size: 16px; }
-
-  .pager { gap: 8px; flex-wrap: wrap; }
-
-  .pager button { padding: 10px 14px; }
 
   #sql-input { height: 110px; font-size: 16px; }
 

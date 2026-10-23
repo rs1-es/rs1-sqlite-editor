@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="description" content="Edit SQLite databases in your browser, without upload them to any server: add/remove records, edit fields, execute SQL commands, and more."/>
+  <meta name="description" content="Edit SQLite databases in your browser, without uploading them to any server: add/remove records, edit fields, execute SQL commands, and more."/>
   <meta name="author" content="Ricardo (RS1)"/>
   <meta name="keywords" content="sqlite,sql,databases"/>
   <title>RS1 SQLite Editor</title>
@@ -23,11 +23,11 @@
 </head>
 <body>
   <header>
-    <button id="btn-menu" title="Show / hide table list">☰</button>
+    <button id="btn-menu" data-i18n-title="menuTooltip" title="Show / hide table list">☰</button>
     <h1>RS1 SQLite Editor</h1>
     <input type="file" id="file-input" accept=".sqlite,.sqlite3,.db,.db3" hidden>
     <button id="btn-theme" data-i18n-title="themeTooltip" title="Toggle dark / light mode">🌙</button>
-    <button id="btn-lang" title="Change language">ES</button>
+    <button id="btn-lang" data-i18n-title="langTooltip" title="Change language">ES</button>
     <button id="btn-new" disabled data-i18n="newBtn">New database</button>
     <button id="btn-open" class="primary" data-i18n="openBtn">Open database</button>
     <button id="btn-export" disabled data-i18n="exportBtn">Export</button>
@@ -36,6 +36,8 @@
   <div id="app">
     <aside id="sidebar">
       <button id="btn-new-table" disabled data-i18n="newTableBtn">+ New table</button>
+      <button id="btn-import-csv" disabled data-i18n="importCsvBtn">Import CSV</button>
+      <input type="file" id="csv-input" accept=".csv,.tsv,.txt,text/csv" hidden>
       <div id="schema-list"></div>
     </aside>
 
@@ -56,16 +58,14 @@
           <h2 id="table-title"></h2>
           <span id="table-badge" class="badge"></span>
           <span class="spacer"></span>
+          <button id="btn-structure" data-i18n="structureBtn">Structure</button>
+          <button id="btn-rename" data-i18n="renameBtn">Rename</button>
+          <button id="btn-drop" data-i18n="dropBtn">Drop</button>
           <button id="btn-add-row" data-i18n="addRow">+ Add row</button>
           <button id="btn-export-csv" data-i18n="exportCsv" data-i18n-title="csvTooltip" title="Download the current listing as a CSV file">Export CSV</button>
         </div>
         <p id="readonly-note" class="muted" hidden data-i18n="readonlyNote">Read-only object: views and WITHOUT ROWID tables cannot be edited.</p>
         <div id="table-container"></div>
-        <div class="pager">
-          <button id="btn-prev">&laquo; <span data-i18n="prev">Prev</span></button>
-          <span id="page-info"></span>
-          <button id="btn-next"><span data-i18n="next">Next</span> &raquo;</button>
-        </div>
       </section>
 
       <section id="sql-view" class="panel" hidden>
@@ -120,7 +120,58 @@
     </form>
   </dialog>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/sql-wasm.js"></script>
+  <dialog id="csv-dialog">
+    <form id="csv-form" autocomplete="off">
+      <h2 data-i18n="importCsvTitle">Import CSV</h2>
+      <label class="field">
+        <span data-i18n="csvTarget">Import into</span>
+        <select id="csv-target"></select>
+      </label>
+      <label class="field" id="csv-newname-wrap">
+        <span data-i18n="tableName">Table name</span>
+        <input id="csv-newname" type="text" spellcheck="false">
+      </label>
+      <label class="field">
+        <span data-i18n="csvDelimiter">Delimiter</span>
+        <select id="csv-delim">
+          <option value="auto" data-i18n="csvAuto">Auto-detect</option>
+          <option value=",">,</option>
+          <option value=";">;</option>
+          <option value="tab" data-i18n="csvTab">Tab</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="csv-header" checked><span data-i18n="csvHeader">First row contains column names</span></label>
+      <p id="csv-info" class="muted"></p>
+      <div id="csv-preview"></div>
+      <p id="csv-error" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" id="csv-cancel" data-i18n="cancelAdd">Cancel</button>
+        <button type="submit" class="primary" data-i18n="importBtn">Import</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="struct-dialog">
+    <h2 id="struct-title"></h2>
+    <h3 data-i18n="structColumns">Columns</h3>
+    <div id="struct-cols"></div>
+    <div class="inline-form">
+      <input id="sc-name" type="text" spellcheck="false" data-i18n-placeholder="colName" placeholder="Column">
+      <select id="sc-type"></select>
+      <label class="check inline"><input type="checkbox" id="sc-nn">NOT NULL</label>
+      <input id="sc-def" type="text" spellcheck="false" data-i18n-placeholder="defaultVal" placeholder="Default">
+      <button type="button" data-act="add-col" data-i18n="addColumn">+ Add column</button>
+    </div>
+    <h3 data-i18n="structIndexes">Indexes</h3>
+    <div id="struct-idx"></div>
+    <div id="struct-newidx"></div>
+    <p id="struct-error" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" id="struct-close" data-i18n="closeBtn">Close</button>
+    </div>
+  </dialog>
+
+  <script src="lib/sql-wasm.js"></script>
   <script src="app.min.js"></script>
 </body>
 </html>

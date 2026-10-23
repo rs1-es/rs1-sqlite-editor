@@ -9,11 +9,15 @@ BUCKET='s3://sqlite.rs1.es/'
 FILES=(
   index.html
   app.js
+  app.min.js
   apple-touch-icon.png
   favicon.png
   favicon.svg
   favicon.ico
   styles.css
+  styles.min.css
+  lib/sql-wasm.js
+  lib/sql-wasm.wasm
 )
 
 echo "Comprobando archivos necesarios..."

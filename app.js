@@ -1,7 +1,6 @@
 'use strict';
 
-const CDN = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.13.0/';
-const PAGE_SIZE = 500;
+const SQLJS_PATH = 'lib/'; // carpeta con sql-wasm.js y sql-wasm.wasm (alojados en este servidor)
 const BLOB_TEXT = '[blob]';
 
 const $ = id => document.getElementById(id);
@@ -9,12 +8,10 @@ const $ = id => document.getElementById(id);
 let SQL = null;
 let db = null;
 let fileName = 'export.sqlite';
-let originalData = null; // contenido original de la BD para detectar cambios sin guardar
+let savedSignature = null;   // firma de la BD en el último guardado/apertura (cambios sin guardar)
 let objects = [];            // [{name, type}]
 let current = null;          // {name, type}
 let columns = [];            // columnas del objeto actual
-let page = 0;
-let totalRows = 0;
 let hasRowid = false;
 let sortCol = null;          // columna por la que se ordena la vista de datos
 let sortDir = 'ASC';
@@ -30,7 +27,7 @@ const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
 const I18N = {
   en: {
     ready: 'Ready. Open a .sqlite or .db file, or create a new database',
-    wasmFail: 'Could not load sql.js (is there an internet connection?): {0}',
+    wasmFail: 'Could not load sql.js (check that lib/sql-wasm.js and lib/sql-wasm.wasm exist on the server): {0}',
     loaded: '{0} loaded ({1} objects)',
     openFail: 'Could not open the file: {0}',
     tables: 'Tables',
@@ -40,7 +37,6 @@ const I18N = {
     table: 'table',
     view: 'view',
     noRows: 'No rows.',
-    pageInfo: 'Page {0} of {1} · {2} rows',
     cellUpdated: 'Cell updated.',
     rowAdded: 'Row added. Double-click a cell to edit it.',
     addFail: 'Could not insert the row: {0}',
@@ -48,6 +44,7 @@ const I18N = {
     cancelAdd: 'Cancel',
     notNullHint: 'NOT NULL column: a value is required',
     confirmDelete: 'Delete this row?',
+    deleteRow: 'Delete row',
     rowDeleted: 'Row deleted.',
     executed: 'Executed. Rows affected: {0}',
     rowsAffected: 'Rows affected: {0}',
@@ -87,8 +84,6 @@ const I18N = {
     welcome2: 'Changes are kept in memory; use <b>Export</b> to download the modified database.',
     addRow: '+ Add row',
     readonlyNote: 'Read-only object: views and WITHOUT ROWID tables cannot be edited.',
-    prev: 'Prev',
-    next: 'Next',
     sqlPlaceholder: 'Write your SQL commands here, e.g.:\nSELECT * FROM table LIMIT 10;',
     runBtn: 'Run (Ctrl+Enter)',
     clearBtn: 'Clear',
@@ -98,10 +93,53 @@ const I18N = {
     unsavedWarning: 'If you leave without exporting, the changes made to the database will be lost.',
     dragHint: 'Drop the file to open the database',
     themeTooltip: 'Toggle dark / light mode',
+    menuTooltip: 'Show / hide table list',
+    langTooltip: 'Change language',
+    queryFile: 'query',
+    importCsvBtn: 'Import CSV',
+    importCsvTitle: 'Import CSV',
+    csvTarget: 'Import into',
+    csvNewTable: '(new table)',
+    csvDelimiter: 'Delimiter',
+    csvAuto: 'Auto-detect',
+    csvTab: 'Tab',
+    csvHeader: 'First row contains column names',
+    importBtn: 'Import',
+    structureBtn: 'Structure',
+    renameBtn: 'Rename',
+    dropBtn: 'Drop',
+    closeBtn: 'Close',
+    structColumns: 'Columns',
+    structIndexes: 'Indexes',
+    csvInfo: '{0} data row(s) · {1} column(s) detected',
+    csvEmpty: 'No data found in the file.',
+    csvNoMatch: 'No CSV column matches the table columns.',
+    csvImported: '{0} row(s) imported into {1}.',
+    csvReadFail: 'Could not read the file: {0}',
+    importFail: 'Import failed, no changes were made: {0}',
+    renamePrompt: 'New table name:',
+    tableRenamed: 'Table renamed to {0}.',
+    confirmDropTable: 'Drop table {0} and all its data? This cannot be undone.',
+    confirmDropView: 'Drop view {0}?',
+    objectDropped: '{0} dropped.',
+    structTitle: 'Structure of {0}',
+    structUpdated: 'Structure updated.',
+    noIndexes: 'No indexes.',
+    idxName: 'Index',
+    idxCols: 'Columns',
+    idxUnique: 'Unique',
+    idxAuto: 'automatic',
+    indexNameOpt: 'Index name (optional)',
+    createIndexBtn: 'Create index',
+    renameColPrompt: 'New column name:',
+    confirmDropCol: 'Drop column {0}? Its data will be lost.',
+    confirmDropIdx: 'Drop index {0}?',
+    needColName: 'Enter a column name.',
+    needIndexCols: 'Select at least one column.',
   },
   es: {
     ready: 'Listo. Abre un archivo .sqlite o .db, o crea una base de datos nueva',
-    wasmFail: 'No se pudo cargar sql.js (¿hay conexión a internet?): {0}',
+    wasmFail: 'No se pudo cargar sql.js (comprueba que lib/sql-wasm.js y lib/sql-wasm.wasm existen en el servidor): {0}',
     loaded: '{0} cargada ({1} objetos)',
     openFail: 'No se pudo abrir el archivo: {0}',
     tables: 'Tablas',
@@ -111,7 +149,6 @@ const I18N = {
     table: 'tabla',
     view: 'vista',
     noRows: 'Sin registros.',
-    pageInfo: 'Página {0} de {1} · {2} filas',
     cellUpdated: 'Celda actualizada.',
     rowAdded: 'Registro añadido. Haz doble clic en una celda para editarla.',
     addFail: 'No se pudo insertar el registro: {0}',
@@ -119,6 +156,7 @@ const I18N = {
     cancelAdd: 'Cancelar',
     notNullHint: 'Columna NOT NULL: hay que indicar un valor',
     confirmDelete: '¿Eliminar este registro?',
+    deleteRow: 'Eliminar registro',
     rowDeleted: 'Registro eliminado.',
     executed: 'Ejecutado. Filas afectadas: {0}',
     rowsAffected: 'Filas afectadas: {0}',
@@ -158,8 +196,6 @@ const I18N = {
     welcome2: 'Los cambios se guardan en memoria; usa <b>Exportar</b> para descargar la base modificada.',
     addRow: '+ Añadir registro',
     readonlyNote: 'Objeto de solo lectura: las vistas y las tablas WITHOUT ROWID no se pueden editar.',
-    prev: 'Anterior',
-    next: 'Siguiente',
     sqlPlaceholder: 'Escribe aquí tus comandos SQL, por ejemplo:\nSELECT * FROM tabla LIMIT 10;',
     runBtn: 'Ejecutar (Ctrl+Enter)',
     clearBtn: 'Limpiar',
@@ -169,10 +205,67 @@ const I18N = {
     unsavedWarning: 'Si sales sin exportar, se perderán los cambios efectuados en la base de datos.',
     dragHint: 'Suelta el archivo para abrir la base de datos',
     themeTooltip: 'Cambiar modo oscuro / claro',
+    menuTooltip: 'Mostrar / ocultar lista de tablas',
+    langTooltip: 'Cambiar idioma',
+    queryFile: 'consulta',
+    importCsvBtn: 'Importar CSV',
+    importCsvTitle: 'Importar CSV',
+    csvTarget: 'Importar en',
+    csvNewTable: '(tabla nueva)',
+    csvDelimiter: 'Delimitador',
+    csvAuto: 'Detectar automáticamente',
+    csvTab: 'Tabulador',
+    csvHeader: 'La primera fila contiene los nombres de columna',
+    importBtn: 'Importar',
+    structureBtn: 'Estructura',
+    renameBtn: 'Renombrar',
+    dropBtn: 'Eliminar',
+    closeBtn: 'Cerrar',
+    structColumns: 'Columnas',
+    structIndexes: 'Índices',
+    csvInfo: '{0} fila(s) de datos · {1} columna(s) detectadas',
+    csvEmpty: 'No se encontraron datos en el archivo.',
+    csvNoMatch: 'Ninguna columna del CSV coincide con las de la tabla.',
+    csvImported: '{0} fila(s) importadas en {1}.',
+    csvReadFail: 'No se pudo leer el archivo: {0}',
+    importFail: 'La importación falló, no se ha cambiado nada: {0}',
+    renamePrompt: 'Nuevo nombre de la tabla:',
+    tableRenamed: 'Tabla renombrada a {0}.',
+    confirmDropTable: '¿Eliminar la tabla {0} y todos sus datos? No se puede deshacer.',
+    confirmDropView: '¿Eliminar la vista {0}?',
+    objectDropped: '{0} eliminada.',
+    structTitle: 'Estructura de {0}',
+    structUpdated: 'Estructura actualizada.',
+    noIndexes: 'Sin índices.',
+    idxName: 'Índice',
+    idxCols: 'Columnas',
+    idxUnique: 'Único',
+    idxAuto: 'automático',
+    indexNameOpt: 'Nombre del índice (opcional)',
+    createIndexBtn: 'Crear índice',
+    renameColPrompt: 'Nuevo nombre de la columna:',
+    confirmDropCol: '¿Eliminar la columna {0}? Se perderán sus datos.',
+    confirmDropIdx: '¿Eliminar el índice {0}?',
+    needColName: 'Indica un nombre de columna.',
+    needIndexCols: 'Selecciona al menos una columna.',
   }
 };
 
-let lang = localStorage.getItem('rs1-lang') || 'en';
+/* Idioma: preferencia guardada > idioma del navegador > inglés */
+function detectLang() {
+  let saved = null;
+  try { saved = localStorage.getItem('rs1-lang'); } catch (e) { /* almacenamiento no disponible */ }
+  if (saved && I18N[saved]) return saved;
+  const prefs = navigator.languages && navigator.languages.length
+    ? navigator.languages : [navigator.language || 'en'];
+  for (const p of prefs) {
+    const code = String(p).toLowerCase().split('-')[0];
+    if (I18N[code]) return code;
+  }
+  return 'en';
+}
+
+let lang = detectLang();
 let lastStatus = null;
 
 function t(key, ...args) {
@@ -231,8 +324,9 @@ $('btn-theme').addEventListener('click', () => {
 
 async function init() {
   try {
-    SQL = await initSqlJs({ locateFile: f => CDN + f });
+    SQL = await initSqlJs({ locateFile: f => SQLJS_PATH + f });
     $('btn-new').disabled = false;
+    $('btn-import-csv').disabled = false;
     setStatus(() => t('ready'));
   } catch (e) {
     setStatus(() => t('wasmFail', e.message), true);
@@ -240,16 +334,17 @@ async function init() {
 }
 
 /* Pone una base de datos (abierta o nueva) como la activa y reinicia la interfaz */
-function useDatabase(newDb, data, name) {
+function useDatabase(newDb, name) {
   if (db) db.close();
   db = newDb;
-  originalData = data;
+  savedSignature = dbSignature();
   fileName = name;
   current = null;
   addRowActive = false;
   addDraft = [];
   $('btn-export').disabled = false;
   $('btn-new-table').disabled = false;
+  $('btn-import-csv').disabled = false;
   $('tab-data').disabled = false;
   $('tab-sql').disabled = false;
   refreshSchema();
@@ -267,7 +362,7 @@ function openFile(file) {
       const newDb = new SQL.Database(data);
       // comprueba que es una base válida antes de reemplazar la actual
       newDb.exec('SELECT 1 FROM sqlite_master LIMIT 1');
-      useDatabase(newDb, data, file.name || 'base.sqlite');
+      useDatabase(newDb, file.name || 'base.sqlite');
       setStatus(() => t('loaded', fileName, objects.length));
     } catch (e) {
       setStatus(() => t('openFail', e.message), true);
@@ -277,6 +372,14 @@ function openFile(file) {
 
 /* ---------- Nueva base de datos ---------- */
 
+function makeEmptyDb() {
+  const newDb = new SQL.Database();
+  // Crear y borrar una tabla temporal fuerza que el archivo tenga cabecera SQLite
+  // válida aunque el usuario lo exporte sin haber creado nada.
+  newDb.run('CREATE TABLE _tmp(x); DROP TABLE _tmp;');
+  return newDb;
+}
+
 function newDatabase() {
   if (!SQL) return;
   if (hasUnsavedChanges() && !confirm(t('confirmDiscard'))) return;
@@ -285,11 +388,7 @@ function newDatabase() {
   name = name.trim().replace(/[\\/:*?"<>|]/g, '_') || t('newDbDefault');
   if (!/\.(sqlite3?|db3?)$/i.test(name)) name += '.sqlite';
   try {
-    const newDb = new SQL.Database();
-    // Crear y borrar una tabla temporal fuerza que el archivo tenga cabecera SQLite
-    // válida aunque el usuario lo exporte sin haber creado nada.
-    newDb.run('CREATE TABLE _tmp(x); DROP TABLE _tmp;');
-    useDatabase(newDb, newDb.export(), name);
+    useDatabase(makeEmptyDb(), name);
     setStatus(() => t('newDbCreated', name));
   } catch (e) {
     setStatus(() => t('newDbFail', e.message), true);
@@ -311,7 +410,7 @@ function refreshSchema() {
     addRowActive = false;
     addDraft = [];
     $('table-view').hidden = true;
-    $('welcome').hidden = false;
+    $('welcome').hidden = !$('sql-view').hidden;
   }
   renderSchema();
 }
@@ -344,32 +443,38 @@ $('btn-menu').addEventListener('click', () => $('sidebar').classList.toggle('ope
 
 /* ---------- Vista de datos ---------- */
 
-function showObject(name, type) {
-  current = { name, type };
-  page = 0;
-  sortCol = null;
-  sortDir = 'ASC';
-  addRowActive = false;
-  addDraft = [];
+/* Lee columnas y detecta rowid del objeto actual; actualiza botones de la barra */
+function loadObjectMeta() {
   try {
-    const info = db.exec(`PRAGMA table_info(${qi(name)})`);
+    const info = db.exec(`PRAGMA table_info(${qi(current.name)})`);
     columns = info.length ? info[0].values.map(r =>
-      ({ name: r[1], type: r[2], notnull: r[3], dflt: r[4] })) : [];
+      ({ name: r[1], type: r[2], notnull: r[3], dflt: r[4], pk: r[5] })) : [];
   } catch (e) {
     columns = [];
   }
   try {
-    db.exec(`SELECT rowid FROM ${qi(name)} LIMIT 1`);
+    db.exec(`SELECT rowid FROM ${qi(current.name)} LIMIT 1`);
     hasRowid = true;
   } catch (e) {
     hasRowid = false;
   }
-  totalRows = db.exec(`SELECT COUNT(*) FROM ${qi(name)}`)[0].values[0][0];
+  if (sortCol && sortCol !== 'rowid' && !columns.some(c => c.name === sortCol)) sortCol = null;
+  $('btn-add-row').hidden = current.type === 'view' || !hasRowid;
+  $('btn-structure').hidden = current.type === 'view';
+  $('btn-rename').hidden = current.type === 'view';
+  $('readonly-note').hidden = !(current.type === 'view' || !hasRowid);
+}
+
+function showObject(name, type) {
+  current = { name, type };
+  sortCol = null;
+  sortDir = 'ASC';
+  addRowActive = false;
+  addDraft = [];
+  loadObjectMeta();
 
   $('table-title').textContent = name;
   $('table-badge').textContent = t(type === 'view' ? 'view' : 'table');
-  $('btn-add-row').hidden = type === 'view' || !hasRowid;
-  $('readonly-note').hidden = !(type === 'view' || !hasRowid);
   $('welcome').hidden = true;
   $('sql-view').hidden = true;
   $('table-view').hidden = false;
@@ -386,8 +491,7 @@ function renderRows() {
     const orderBy = sortCol
       ? ` ORDER BY ${sortCol === 'rowid' ? 'rowid' : qi(sortCol)} ${sortDir}` : '';
     const res = db.exec(
-      `SELECT ${hasRowid ? 'rowid, ' : ''}* FROM ${qi(current.name)}${orderBy} ` +
-      `LIMIT ${PAGE_SIZE} OFFSET ${page * PAGE_SIZE}`);
+      `SELECT ${hasRowid ? 'rowid, ' : ''}* FROM ${qi(current.name)}${orderBy}`);
     const rows = res.length ? res[0].values : [];
 
     const thClass = col =>
@@ -413,13 +517,13 @@ function renderRows() {
         if (v === null || v === undefined) {
           html += `<td class="cell" data-col="${esc(c.name)}"><span class="null">NULL</span></td>`;
         } else if (v instanceof Uint8Array) {
-          html += `<td class="cell" data-col="${esc(c.name)}"><span class="blob">${BLOB_TEXT} (${v.length} B)</span></td>`;
+          html += `<td class="cell" data-col="${esc(c.name)}" data-locked="1"><span class="blob">${BLOB_TEXT} (${v.length} B)</span></td>`;
         } else {
           html += `<td class="cell" data-col="${esc(c.name)}" ${editable ? '' : 'data-locked="1"'}>${esc(v)}</td>`;
         }
       }
       if (editable) {
-        html += `<td><button class="del" data-rowid="${row[0]}" title="Eliminar registro">✕</button></td>`;
+        html += `<td><button class="del" data-rowid="${row[0]}" title="${esc(t('deleteRow'))}">✕</button></td>`;
       }
       html += '</tr>';
     }
@@ -445,10 +549,6 @@ function renderRows() {
     html += rows.length ? '</tbody></table>' : `</tbody></table><p class="muted">${esc(t('noRows'))}</p>`;
     container.innerHTML = html;
 
-    const pages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
-    $('page-info').textContent = t('pageInfo', page + 1, pages, totalRows);
-    $('btn-prev').disabled = page === 0;
-    $('btn-next').disabled = page >= pages - 1;
   } catch (e) {
     container.innerHTML = `<p class="error">${esc(e.message)}</p>`;
   }
@@ -462,6 +562,7 @@ tableContainer.addEventListener('dblclick', e => {
   const td = e.target.closest('td.cell');
   if (!td || td.dataset.locked || current.type !== 'table' || !hasRowid) return;
   td.dataset.original = td.textContent;
+  td.dataset.originalHtml = td.innerHTML;
   td.contentEditable = 'true';
   td.focus();
   const range = document.createRange();
@@ -485,7 +586,7 @@ tableContainer.addEventListener('focusout', e => {
   const newVal = td.textContent;
   if (td.dataset.cancel) {
     delete td.dataset.cancel;
-    td.innerHTML = newVal ? esc(newVal) : '<span class="null">NULL</span>';
+    td.innerHTML = td.dataset.originalHtml;
     return;
   }
   if (newVal === td.dataset.original) return;
@@ -495,10 +596,12 @@ tableContainer.addEventListener('focusout', e => {
 function commitCell(td, newVal) {
   const rowid = td.closest('tr').querySelector('button.del').dataset.rowid;
   const col = td.dataset.col;
+  const colDef = columns.find(c => c.name === col);
+  const emptyValue = colDef && colDef.notnull ? '' : null;
   try {
     db.run(
       `UPDATE ${qi(current.name)} SET ${qi(col)} = ? WHERE rowid = ?`,
-      [newVal === '' ? null : newVal, Number(rowid)]);
+      [newVal === '' ? emptyValue : newVal, Number(rowid)]);
     setStatus(() => t('cellUpdated'));
     renderRows();
   } catch (e) {
@@ -549,9 +652,8 @@ function commitAddRow() {
     }
     addRowActive = false;
     addDraft = [];
-    totalRows++;
-    page = Math.floor((totalRows - 1) / PAGE_SIZE);
     renderRows();
+    if (!sortCol) tableContainer.scrollTop = tableContainer.scrollHeight;
     setStatus(() => t('rowAdded'));
   } catch (e) {
     // la fila de borrador se mantiene con los valores para poder corregirlos
@@ -607,8 +709,6 @@ tableContainer.addEventListener('click', e => {
   if (!confirm(t('confirmDelete'))) return;
   try {
     db.run(`DELETE FROM ${qi(current.name)} WHERE rowid = ?`, [Number(btn.dataset.rowid)]);
-    totalRows--;
-    page = Math.min(page, Math.max(0, Math.ceil(totalRows / PAGE_SIZE) - 1));
     renderRows();
     setStatus(() => t('rowDeleted'));
   } catch (err) {
@@ -616,12 +716,22 @@ tableContainer.addEventListener('click', e => {
   }
 });
 
-$('btn-prev').addEventListener('click', () => { if (page > 0) { page--; renderRows(); } });
-$('btn-next').addEventListener('click', () => {
-  if (page < Math.ceil(totalRows / PAGE_SIZE) - 1) { page++; renderRows(); }
-});
-
 /* ---------- Consola SQL ---------- */
+
+/* Tras ejecutar SQL: refresca esquema y la tabla/vista abierta (puede haber cambiado) */
+function refreshAfterSql() {
+  refreshSchema();
+  if (current) {
+    addRowActive = false;
+    addDraft = [];
+    loadObjectMeta();
+    renderRows();
+  }
+}
+
+function totalChanges() {
+  return db.exec('SELECT total_changes()')[0].values[0][0];
+}
 
 function runSQL() {
   const sql = $('sql-input').value.trim();
@@ -629,8 +739,9 @@ function runSQL() {
   if (!sql) return;
   out.innerHTML = '';
   try {
+    const before = totalChanges();
     const results = db.exec(sql);
-    const modified = db.getRowsModified();
+    const modified = totalChanges() - before;
     if (!results.length) {
       out.innerHTML = `<p class="msg ok">${esc(t('executed', modified))}</p>`;
     } else {
@@ -644,24 +755,27 @@ function runSQL() {
         csvBtn.textContent = 'CSV';
         csvBtn.title = t('csvTooltip');
         csvBtn.addEventListener('click', () =>
-          downloadCsv(`consulta_${i + 1}`, r.columns, r.values));
+          downloadCsv(`${t('queryFile')}_${i + 1}`, r.columns, r.values));
         head.appendChild(h);
         head.appendChild(csvBtn);
         out.appendChild(head);
         out.appendChild(buildResultTable(r.columns, r.values));
       });
-      const p = document.createElement('p');
-      p.className = 'msg ok';
-      p.textContent = t('rowsAffected', modified);
-      out.appendChild(p);
+      if (modified > 0) {
+        const p = document.createElement('p');
+        p.className = 'msg ok';
+        p.textContent = t('rowsAffected', modified);
+        out.appendChild(p);
+      }
     }
-    refreshSchema();
+    refreshAfterSql();
     setStatus(() => t('sqlOk'));
   } catch (e) {
     const p = document.createElement('p');
     p.className = 'msg error';
     p.textContent = e.message;
     out.appendChild(p);
+    refreshAfterSql(); // sentencias anteriores al error pueden haberse aplicado
     setStatus(() => t('sqlError'), true);
   }
 }
@@ -893,6 +1007,323 @@ $('table-form').addEventListener('submit', e => {
   setStatus(() => t('tableCreated', name));
 });
 
+/* ---------- Renombrar y eliminar tablas / vistas ---------- */
+
+$('btn-rename').addEventListener('click', () => {
+  if (!current || current.type !== 'table') return;
+  let n = prompt(t('renamePrompt'), current.name);
+  if (n === null) return;
+  n = n.trim();
+  if (!n || n === current.name) return;
+  try {
+    db.run(`ALTER TABLE ${qi(current.name)} RENAME TO ${qi(n)}`);
+  } catch (e) {
+    setStatus(e.message, true);
+    return;
+  }
+  refreshSchema();
+  showObject(n, 'table');
+  setStatus(() => t('tableRenamed', n));
+});
+
+$('btn-drop').addEventListener('click', () => {
+  if (!current) return;
+  const { name, type } = current;
+  if (!confirm(t(type === 'view' ? 'confirmDropView' : 'confirmDropTable', name))) return;
+  try {
+    db.run(`DROP ${type === 'view' ? 'VIEW' : 'TABLE'} ${qi(name)}`);
+  } catch (e) {
+    setStatus(e.message, true);
+    return;
+  }
+  refreshSchema();
+  setStatus(() => t('objectDropped', name));
+});
+
+/* ---------- Estructura: columnas e índices ---------- */
+
+function structError(msg) {
+  const el = $('struct-error');
+  el.textContent = msg || '';
+  el.hidden = !msg;
+}
+
+function renderStructure() {
+  const tbl = current.name;
+  $('struct-title').textContent = t('structTitle', tbl);
+  structError('');
+
+  let h = '<div class="tbl-scroll"><table class="data"><thead><tr>' +
+    [t('colName'), t('colType'), 'PK', 'NN', t('defaultVal'), '']
+      .map(x => `<th>${esc(x)}</th>`).join('') + '</tr></thead><tbody>';
+  for (const c of columns) {
+    h += `<tr><td>${esc(c.name)}</td><td>${esc(c.type || '')}</td>` +
+      `<td>${c.pk ? '✓' : ''}</td><td>${c.notnull ? '✓' : ''}</td>` +
+      `<td>${esc(displayDefault(c.dflt))}</td><td class="nowrap">` +
+      `<button type="button" data-act="rn-col" data-col="${esc(c.name)}" title="${esc(t('renameBtn'))}">✎</button> ` +
+      `<button type="button" class="del" data-act="drop-col" data-col="${esc(c.name)}" title="${esc(t('dropBtn'))}">✕</button>` +
+      '</td></tr>';
+  }
+  $('struct-cols').innerHTML = h + '</tbody></table></div>';
+
+  const il = db.exec(`PRAGMA index_list(${qi(tbl)})`);
+  const idxs = il.length ? il[0].values : [];
+  if (!idxs.length) {
+    $('struct-idx').innerHTML = `<p class="muted">${esc(t('noIndexes'))}</p>`;
+  } else {
+    let ih = '<div class="tbl-scroll"><table class="data"><thead><tr>' +
+      [t('idxName'), t('idxCols'), t('idxUnique'), '']
+        .map(x => `<th>${esc(x)}</th>`).join('') + '</tr></thead><tbody>';
+    for (const r of idxs) {
+      const info = db.exec(`PRAGMA index_info(${qi(r[1])})`);
+      const cols = (info.length ? info[0].values : []).map(x => x[2] === null ? '(expr)' : x[2]).join(', ');
+      ih += `<tr><td>${esc(r[1])}</td><td>${esc(cols)}</td><td>${r[2] ? '✓' : ''}</td><td class="nowrap">` +
+        (r[3] === 'c'
+          ? `<button type="button" class="del" data-act="drop-idx" data-idx="${esc(r[1])}" title="${esc(t('dropBtn'))}">✕</button>`
+          : `<span class="muted">${esc(t('idxAuto'))}</span>`) + '</td></tr>';
+    }
+    $('struct-idx').innerHTML = ih + '</tbody></table></div>';
+  }
+
+  $('struct-newidx').innerHTML = '<div class="inline-form">' +
+    `<input type="text" id="si-name" spellcheck="false" placeholder="${esc(t('indexNameOpt'))}">` +
+    columns.map(c => `<label class="check inline"><input type="checkbox" class="si-col" value="${esc(c.name)}">${esc(c.name)}</label>`).join('') +
+    '<label class="check inline"><input type="checkbox" id="si-uq">UNIQUE</label>' +
+    `<button type="button" data-act="add-idx">${esc(t('createIndexBtn'))}</button></div>`;
+}
+
+/* Ejecuta una sentencia de estructura; refresca la vista si va bien */
+function structRun(sql) {
+  try {
+    db.run(sql);
+  } catch (err) {
+    structError(err.message);
+    return false;
+  }
+  addRowActive = false;
+  addDraft = [];
+  loadObjectMeta();
+  renderRows();
+  renderStructure();
+  setStatus(() => t('structUpdated'));
+  return true;
+}
+
+$('sc-type').innerHTML = COL_TYPES.map(x => `<option>${x}</option>`).join('');
+
+$('btn-structure').addEventListener('click', () => {
+  if (!current || current.type !== 'table') return;
+  renderStructure();
+  $('struct-dialog').showModal();
+});
+$('struct-close').addEventListener('click', () => $('struct-dialog').close());
+
+$('struct-dialog').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  const tbl = current.name;
+  const col = b.dataset.col;
+  switch (b.dataset.act) {
+    case 'rn-col': {
+      const n = prompt(t('renameColPrompt'), col);
+      if (n === null || !n.trim() || n.trim() === col) return;
+      structRun(`ALTER TABLE ${qi(tbl)} RENAME COLUMN ${qi(col)} TO ${qi(n.trim())}`);
+      break;
+    }
+    case 'drop-col':
+      if (confirm(t('confirmDropCol', col))) structRun(`ALTER TABLE ${qi(tbl)} DROP COLUMN ${qi(col)}`);
+      break;
+    case 'drop-idx':
+      if (confirm(t('confirmDropIdx', b.dataset.idx))) structRun(`DROP INDEX ${qi(b.dataset.idx)}`);
+      break;
+    case 'add-col': {
+      const name = $('sc-name').value.trim();
+      if (!name) { structError(t('needColName')); return; }
+      const c = { type: $('sc-type').value, def: $('sc-def').value.trim() };
+      let sql = `ALTER TABLE ${qi(tbl)} ADD COLUMN ${qi(name)} ${c.type}`;
+      if ($('sc-nn').checked) sql += ' NOT NULL';
+      if (c.def !== '') sql += ' DEFAULT ' + ntDefaultLiteral(c);
+      if (structRun(sql)) {
+        $('sc-name').value = '';
+        $('sc-def').value = '';
+        $('sc-nn').checked = false;
+      }
+      break;
+    }
+    case 'add-idx': {
+      const cols = [...document.querySelectorAll('#struct-newidx .si-col:checked')].map(x => x.value);
+      if (!cols.length) { structError(t('needIndexCols')); return; }
+      const name = $('si-name').value.trim() || `idx_${tbl}_${cols.join('_')}`;
+      structRun(`CREATE ${$('si-uq').checked ? 'UNIQUE ' : ''}INDEX ${qi(name)} ON ${qi(tbl)} (${cols.map(qi).join(', ')})`);
+      break;
+    }
+  }
+});
+
+/* ---------- Importar CSV ---------- */
+
+let csvText = '';
+let csvBase = '';
+let csvRows = [];
+
+function detectDelim(text) {
+  const line = text.replace(/^\uFEFF/, '').split(/\r?\n/, 1)[0];
+  const best = [',', ';', '\t'].map(d => [d, line.split(d).length]).sort((a, b) => b[1] - a[1])[0];
+  return best[1] > 1 ? best[0] : ',';
+}
+
+/* Analizador CSV (RFC 4180): comillas dobles, saltos de línea dentro de campos */
+function parseCsv(text, d) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = [];
+  let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; }
+      else f += c;
+    } else if (c === '"' && f === '') q = true;
+    else if (c === d) { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(f); rows.push(row); row = []; f = '';
+    } else f += c;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  return rows.filter(r => !(r.length === 1 && r[0] === ''));
+}
+
+/* INTEGER / REAL solo si todos los valores lo son (sin ceros a la izquierda); si no, TEXT */
+function csvInferType(values) {
+  let ty = 'INTEGER', any = false;
+  for (const v of values) {
+    if (v === undefined || v === '') continue;
+    any = true;
+    const isInt = /^-?(0|[1-9]\d{0,14})$/.test(v);
+    const isReal = /^-?(0|[1-9]\d*)\.\d+$/.test(v);
+    if (!isInt && !isReal) return 'TEXT';
+    if (isReal) ty = 'REAL';
+  }
+  return any ? ty : 'TEXT';
+}
+
+function csvError(msg) {
+  const el = $('csv-error');
+  el.textContent = msg || '';
+  el.hidden = !msg;
+}
+
+function csvUpdate() {
+  const sel = $('csv-delim').value;
+  csvRows = parseCsv(csvText, sel === 'auto' ? detectDelim(csvText) : sel === 'tab' ? '\t' : sel);
+  const header = $('csv-header').checked;
+  const width = csvRows.reduce((m, r) => Math.max(m, r.length), 0);
+  $('csv-newname-wrap').hidden = $('csv-target').value !== '';
+  $('csv-info').textContent = csvRows.length
+    ? t('csvInfo', csvRows.length - (header ? 1 : 0), width) : t('csvEmpty');
+  $('csv-preview').innerHTML = '<table class="data">' + csvRows.slice(0, 6).map((r, i) =>
+    '<tr>' + r.map(c => header && i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`).join('') + '</tr>'
+  ).join('') + '</table>';
+  csvError('');
+}
+
+function importCsvFile(file) {
+  if (!SQL) return;
+  file.text().then(txt => {
+    csvText = txt;
+    csvBase = file.name.replace(/\.[^.]*$/, '');
+    const tables = objects.filter(o => o.type === 'table');
+    $('csv-target').innerHTML = `<option value="">${esc(t('csvNewTable'))}</option>` +
+      tables.map(o => `<option value="${esc(o.name)}">${esc(o.name)}</option>`).join('');
+    if (current && current.type === 'table') $('csv-target').value = current.name;
+    $('csv-newname').value = csvBase;
+    $('csv-delim').value = 'auto';
+    $('csv-header').checked = true;
+    csvUpdate();
+    $('csv-dialog').showModal();
+  }).catch(err => setStatus(() => t('csvReadFail', err.message), true));
+}
+
+$('btn-import-csv').addEventListener('click', () => $('csv-input').click());
+$('csv-input').addEventListener('change', e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (f) importCsvFile(f);
+});
+$('csv-dialog').addEventListener('change', csvUpdate);
+$('csv-cancel').addEventListener('click', () => $('csv-dialog').close());
+
+$('csv-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const header = $('csv-header').checked;
+  const data = header ? csvRows.slice(1) : csvRows;
+  if (!data.length) { csvError(t('csvEmpty')); return; }
+  const width = csvRows.reduce((m, r) => Math.max(m, r.length), 0);
+  const names = header ? csvRows[0].map(x => x.trim()) : [];
+  const target = $('csv-target').value;
+  let table, cols, map, createSql = null;
+
+  if (!target) {
+    table = $('csv-newname').value.trim();
+    if (!table) { csvError(t('needTableName')); return; }
+    const seen = new Set();
+    cols = Array.from({ length: width }, (_, i) => {
+      const base = names[i] || 'column' + (i + 1);
+      let n = base, k = 2;
+      while (seen.has(n.toLowerCase())) n = base + '_' + k++;
+      seen.add(n.toLowerCase());
+      return n;
+    });
+    map = cols.map((_, i) => i);
+    createSql = `CREATE TABLE ${qi(table)} (` +
+      cols.map((n, i) => qi(n) + ' ' + csvInferType(data.map(r => r[i]))).join(', ') + ')';
+  } else {
+    table = target;
+    const info = db.exec(`PRAGMA table_info(${qi(table)})`)[0].values.map(r => r[1]);
+    cols = [];
+    map = [];
+    info.forEach((n, i) => {
+      const j = header ? names.findIndex(x => x.toLowerCase() === n.toLowerCase()) : (i < width ? i : -1);
+      if (j >= 0) { cols.push(n); map.push(j); }
+    });
+    if (!cols.length) { csvError(t('csvNoMatch')); return; }
+  }
+
+  // Sin base abierta: se crea una nueva, pero solo se activa si la importación sale bien
+  let pending = null, baseSig = null;
+  if (!db) {
+    try { pending = makeEmptyDb(); } catch (err) { csvError(t('newDbFail', err.message)); return; }
+    baseSig = dbSignature(pending);
+  }
+  const d = pending || db;
+
+  let st = null;
+  try {
+    d.run('BEGIN');
+    if (createSql) d.run(createSql);
+    st = d.prepare(`INSERT INTO ${qi(table)} (${cols.map(c => qi(c)).join(', ')}) ` +
+      `VALUES (${cols.map(() => '?').join(', ')})`);
+    for (const r of data) st.run(map.map(i => (r[i] === undefined || r[i] === '' ? null : r[i])));
+    st.free();
+    st = null;
+    d.run('COMMIT');
+  } catch (err) {
+    if (st) { try { st.free(); } catch (_) { /* ya liberado */ } }
+    try { d.run('ROLLBACK'); } catch (_) { /* sin transacción activa */ }
+    if (pending) pending.close();
+    csvError(t('importFail', err.message));
+    return;
+  }
+  $('csv-dialog').close();
+  if (pending) {
+    useDatabase(pending, (csvBase.replace(/[\\/:*?"<>|]/g, '_') || 'database') + '.sqlite');
+    savedSignature = baseSig; // los datos importados aún no se han exportado
+  }
+  refreshSchema();
+  showObject(table, 'table');
+  setStatus(() => t('csvImported', data.length, table));
+});
+
 /* ---------- Pestañas ---------- */
 
 function switchTab(tab) {
@@ -923,13 +1354,13 @@ document.addEventListener('drop', e => {
   e.preventDefault();
   document.body.classList.remove('dragging');
   const file = e.dataTransfer.files[0];
-  if (file) openFile(file);
+  if (file) { if (/\.(csv|tsv|txt)$/i.test(file.name)) importCsvFile(file); else openFile(file); }
 });
 
 $('btn-export').addEventListener('click', () => {
   try {
     const data = db.export();
-    originalData = data; // lo exportado cuenta como guardado
+    savedSignature = dbSignature(); // lo exportado cuenta como guardado
     const blob = new Blob([data], { type: 'application/x-sqlite3' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -944,14 +1375,23 @@ $('btn-export').addEventListener('click', () => {
 
 /* ---------- Aviso de cambios sin guardar ---------- */
 
-function hasUnsavedChanges() {
-  if (!db || !originalData) return false;
-  const cur = db.export();
-  if (cur.length !== originalData.length) return true;
-  for (let i = 0; i < cur.length; i++) {
-    if (cur[i] !== originalData[i]) return true;
+/* Firma barata del estado de la BD: filas modificadas por INSERT/UPDATE/DELETE,
+   versión del esquema (DDL) y user_version. Evita exportar la BD entera para comparar. */
+function dbSignature(d = db) {
+  try {
+    const r = d.exec(
+      'SELECT total_changes(), (SELECT schema_version FROM pragma_schema_version), ' +
+      '(SELECT user_version FROM pragma_user_version)');
+    return r[0].values[0].join('|');
+  } catch (e) {
+    return null; // desconocido: se tratará como "con cambios"
   }
-  return false;
+}
+
+function hasUnsavedChanges() {
+  if (!db || savedSignature === null) return false;
+  const sig = dbSignature();
+  return sig === null || sig !== savedSignature;
 }
 
 window.addEventListener('beforeunload', e => {
