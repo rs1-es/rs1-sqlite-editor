@@ -28,9 +28,9 @@
     <input type="file" id="file-input" accept=".sqlite,.sqlite3,.db,.db3" hidden>
     <button id="btn-theme" data-i18n-title="themeTooltip" title="Toggle dark / light mode">🌙</button>
     <button id="btn-lang" data-i18n-title="langTooltip" title="Change language">ES</button>
-    <button id="btn-new" disabled data-i18n="newBtn">New database</button>
-    <button id="btn-open" class="primary" data-i18n="openBtn">Open database</button>
-    <button id="btn-export" disabled data-i18n="exportBtn">Export</button>
+    <button id="btn-new" disabled data-i18n="newBtn" data-i18n-title="newBtn">New database</button>
+    <button id="btn-open" class="primary" data-i18n="openBtn" data-i18n-title="openBtn">Open database</button>
+    <button id="btn-export" disabled data-i18n="exportBtn" data-i18n-title="exportBtn">Export</button>
   </header>
 
   <div id="app">
@@ -58,10 +58,10 @@
           <h2 id="table-title"></h2>
           <span id="table-badge" class="badge"></span>
           <span class="spacer"></span>
-          <button id="btn-structure" data-i18n="structureBtn">Structure</button>
-          <button id="btn-rename" data-i18n="renameBtn">Rename</button>
-          <button id="btn-drop" data-i18n="dropBtn">Drop</button>
-          <button id="btn-add-row" data-i18n="addRow">+ Add row</button>
+          <button id="btn-structure" data-i18n="structureBtn" data-i18n-title="structureBtn">Structure</button>
+          <button id="btn-rename" data-i18n="renameBtn" data-i18n-title="renameBtn">Rename</button>
+          <button id="btn-drop" data-i18n="dropBtn" data-i18n-title="dropBtn">Drop</button>
+          <button id="btn-add-row" data-i18n="addRow" data-i18n-title="addRow">+ Add row</button>
           <button id="btn-export-csv" data-i18n="exportCsv" data-i18n-title="csvTooltip" title="Download the current listing as a CSV file">Export CSV</button>
         </div>
         <div class="toolbar filter-bar">
@@ -71,6 +71,14 @@
         </div>
         <p id="readonly-note" class="muted" hidden data-i18n="readonlyNote">Read-only object: views and WITHOUT ROWID tables cannot be edited.</p>
         <div id="table-container"></div>
+        <nav id="pager" hidden>
+          <button id="pg-first" data-i18n-title="pageFirst" title="First page">«</button>
+          <button id="pg-prev" data-i18n-title="pagePrev" title="Previous page">‹</button>
+          <span id="pager-info"></span>
+          <button id="pg-next" data-i18n-title="pageNext" title="Next page">›</button>
+          <button id="pg-last" data-i18n-title="pageLast" title="Last page">»</button>
+          <select id="pg-size" data-i18n-title="pageSizeLabel" title="Rows per page" aria-label="Rows per page"></select>
+        </nav>
       </section>
 
       <section id="sql-view" class="panel" hidden>

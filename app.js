@@ -15,11 +15,20 @@ let columns = [];            // columnas del objeto actual
 let hasRowid = false;
 let filterText = '';          // texto de búsqueda de la vista de datos
 let filterCol = '';           // '' = todas las columnas
+let page = 0;                // página actual (base 0) de la vista de datos
+let pageSize = loadPageSize();
 let sortCol = null;          // columna por la que se ordena la vista de datos
 let sortDir = 'ASC';
 let addRowActive = false;    // fila "nuevo registro" en curso (aún sin insertar)
 let addDraft = [];           // valores escritos en la fila nueva
 
+const PAGE_SIZES = [50, 100, 250, 500];
+function loadPageSize() {
+  try {
+    const n = Number(localStorage.getItem('rs1-page-size'));
+    return PAGE_SIZES.includes(n) ? n : 100;
+  } catch (e) { return 100; }
+}
 const qi = n => '"' + String(n).replace(/"/g, '""') + '"';
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -42,8 +51,13 @@ const I18N = {
     noMatches: 'No rows match the search.',
     filterPlaceholder: 'Search rows…',
     filterAll: 'All columns',
-    rowCount: '{0} row(s)',
-    rowCountFiltered: '{0} of {1} row(s)',
+    rowCount: '{0}–{1} of {2}',
+    rowCountFiltered: '{0}–{1} of {2} (filtered from {3})',
+    pagePrev: 'Previous page',
+    pageNext: 'Next page',
+    pageFirst: 'First page',
+    pageLast: 'Last page',
+    pageSizeLabel: 'Rows per page',
     cellUpdated: 'Cell updated.',
     rowAdded: 'Row added. Double-click a cell to edit it.',
     addFail: 'Could not insert the row: {0}',
@@ -159,8 +173,13 @@ const I18N = {
     noMatches: 'Ningún registro coincide con la búsqueda.',
     filterPlaceholder: 'Buscar filas…',
     filterAll: 'Todas las columnas',
-    rowCount: '{0} fila(s)',
-    rowCountFiltered: '{0} de {1} fila(s)',
+    rowCount: '{0}–{1} de {2}',
+    rowCountFiltered: '{0}–{1} de {2} (filtradas de {3})',
+    pagePrev: 'Página anterior',
+    pageNext: 'Página siguiente',
+    pageFirst: 'Primera página',
+    pageLast: 'Última página',
+    pageSizeLabel: 'Filas por página',
     cellUpdated: 'Celda actualizada.',
     rowAdded: 'Registro añadido. Haz doble clic en una celda para editarla.',
     addFail: 'No se pudo insertar el registro: {0}',
@@ -492,6 +511,7 @@ function showObject(name, type) {
   filterText = '';
   filterCol = '';
   $('filter-input').value = '';
+  page = 0;
   sortCol = null;
   sortDir = 'ASC';
   addRowActive = false;
@@ -526,6 +546,7 @@ function buildListQuery(includeRowid) {
     ? ` ORDER BY ${sortCol === 'rowid' ? 'rowid' : qi(sortCol)} ${sortDir}` : '';
   return {
     sql: `SELECT ${includeRowid && hasRowid ? 'rowid, ' : ''}* FROM ${qi(current.name)}${where}${orderBy}`,
+    countSql: `SELECT COUNT(*) FROM ${qi(current.name)}${where}`,
     params
   };
 }
@@ -536,14 +557,12 @@ function renderRows() {
 
   try {
     const q = buildListQuery(true);
-    const res = db.exec(q.sql, q.params);
+    const matches = db.exec(q.countSql, q.params)[0].values[0][0];
+    const pages = Math.max(1, Math.ceil(matches / pageSize));
+    page = Math.min(Math.max(page, 0), pages - 1);
+    const res = db.exec(`${q.sql} LIMIT ${pageSize} OFFSET ${page * pageSize}`, q.params);
     const rows = res.length ? res[0].values : [];
-    if (filterText) {
-      const total = db.exec(`SELECT COUNT(*) FROM ${qi(current.name)}`)[0].values[0][0];
-      $('row-count').textContent = t('rowCountFiltered', rows.length, total);
-    } else {
-      $('row-count').textContent = t('rowCount', rows.length);
-    }
+    renderPager(matches, rows.length, pages);
 
     const thClass = col =>
       'sortable' + (sortCol === col ? ` sorted ${sortDir === 'ASC' ? 'asc' : 'desc'}` : '');
@@ -603,9 +622,49 @@ function renderRows() {
 
   } catch (e) {
     $('row-count').textContent = '';
+    $('pager').hidden = true;
     container.innerHTML = `<p class="error">${esc(e.message)}</p>`;
   }
 }
+
+/* Paginación */
+
+function renderPager(matches, shown, pages) {
+  if (matches) {
+    const from = page * pageSize + 1;
+    const to = from + shown - 1;
+    $('row-count').textContent = filterText
+      ? t('rowCountFiltered', from, to, matches,
+          db.exec(`SELECT COUNT(*) FROM ${qi(current.name)}`)[0].values[0][0])
+      : t('rowCount', from, to, matches);
+  } else {
+    $('row-count').textContent = '';
+  }
+  // con una sola página y el tamaño mínimo no hay nada que paginar
+  $('pager').hidden = matches <= PAGE_SIZES[0];
+  $('pager-info').textContent = `${page + 1} / ${pages}`;
+  $('pg-first').disabled = $('pg-prev').disabled = page === 0;
+  $('pg-last').disabled = $('pg-next').disabled = page >= pages - 1;
+}
+
+function goToPage(n) {
+  page = n;
+  renderRows();
+  $('table-container').scrollTop = 0;
+}
+
+$('pg-first').addEventListener('click', () => goToPage(0));
+$('pg-prev').addEventListener('click', () => goToPage(page - 1));
+$('pg-next').addEventListener('click', () => goToPage(page + 1));
+$('pg-last').addEventListener('click', () => goToPage(Infinity));
+$('pg-size').innerHTML = PAGE_SIZES.map(n => `<option value="${n}">${n}</option>`).join('');
+$('pg-size').value = pageSize;
+$('pg-size').addEventListener('change', e => {
+  pageSize = Number(e.target.value);
+  try { localStorage.setItem('rs1-page-size', pageSize); } catch (err) { /* sin almacenamiento */ }
+  page = 0;
+  if (current) renderRows();
+});
 
 /* Búsqueda / filtrado */
 
@@ -614,6 +673,7 @@ $('filter-input').addEventListener('input', e => {
   clearTimeout(filterTimer);
   filterTimer = setTimeout(() => {
     filterText = e.target.value.trim();
+    page = 0;
     if (current) renderRows();
   }, 200);
 });
@@ -622,11 +682,13 @@ $('filter-input').addEventListener('keydown', e => {
     e.target.value = '';
     clearTimeout(filterTimer);
     filterText = '';
+    page = 0;
     if (current) renderRows();
   }
 });
 $('filter-col').addEventListener('change', e => {
   filterCol = e.target.value;
+  page = 0;
   if (filterText && current) renderRows();
 });
 
@@ -728,6 +790,7 @@ function commitAddRow() {
     }
     addRowActive = false;
     addDraft = [];
+    if (!sortCol && !filterText) page = Infinity;
     renderRows();
     if (!sortCol) tableContainer.scrollTop = tableContainer.scrollHeight;
     setStatus(() => t('rowAdded'));
@@ -777,6 +840,7 @@ tableContainer.addEventListener('click', e => {
     const col = th.dataset.sort;
     if (sortCol === col) sortDir = sortDir === 'ASC' ? 'DESC' : 'ASC';
     else { sortCol = col; sortDir = 'ASC'; }
+    page = 0;
     renderRows();
     return;
   }
