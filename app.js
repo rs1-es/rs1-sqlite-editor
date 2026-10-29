@@ -899,8 +899,8 @@ function runSQL() {
         const h = document.createElement('h4');
         h.textContent = t('resultN', i + 1, r.values.length);
         const csvBtn = document.createElement('button');
-        csvBtn.className = 'csv-btn';
-        csvBtn.textContent = 'CSV';
+        csvBtn.className = 'csv-export';
+        csvBtn.textContent = t('exportCsv');
         csvBtn.title = t('csvTooltip');
         csvBtn.addEventListener('click', () =>
           downloadCsv(`${t('queryFile')}_${i + 1}`, r.columns, r.values));
