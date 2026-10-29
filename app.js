@@ -759,6 +759,7 @@ $('btn-add-row').addEventListener('click', () => {
   }
   addRowActive = true;
   addDraft = [];
+  page = Infinity; // la fila nueva se muestra al final del listado, en la última página
   renderRows();
   const row = tableContainer.querySelector('tr.add-row');
   if (row) {
