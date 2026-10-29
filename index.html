@@ -64,6 +64,11 @@
           <button id="btn-add-row" data-i18n="addRow">+ Add row</button>
           <button id="btn-export-csv" data-i18n="exportCsv" data-i18n-title="csvTooltip" title="Download the current listing as a CSV file">Export CSV</button>
         </div>
+        <div class="toolbar filter-bar">
+          <input type="search" id="filter-input" spellcheck="false" autocomplete="off" data-i18n-placeholder="filterPlaceholder" placeholder="Search rows…">
+          <select id="filter-col"></select>
+          <span id="row-count" class="muted"></span>
+        </div>
         <p id="readonly-note" class="muted" hidden data-i18n="readonlyNote">Read-only object: views and WITHOUT ROWID tables cannot be edited.</p>
         <div id="table-container"></div>
       </section>

@@ -13,6 +13,8 @@ let objects = [];            // [{name, type}]
 let current = null;          // {name, type}
 let columns = [];            // columnas del objeto actual
 let hasRowid = false;
+let filterText = '';          // texto de búsqueda de la vista de datos
+let filterCol = '';           // '' = todas las columnas
 let sortCol = null;          // columna por la que se ordena la vista de datos
 let sortDir = 'ASC';
 let addRowActive = false;    // fila "nuevo registro" en curso (aún sin insertar)
@@ -37,6 +39,11 @@ const I18N = {
     table: 'table',
     view: 'view',
     noRows: 'No rows.',
+    noMatches: 'No rows match the search.',
+    filterPlaceholder: 'Search rows…',
+    filterAll: 'All columns',
+    rowCount: '{0} row(s)',
+    rowCountFiltered: '{0} of {1} row(s)',
     cellUpdated: 'Cell updated.',
     rowAdded: 'Row added. Double-click a cell to edit it.',
     addFail: 'Could not insert the row: {0}',
@@ -149,6 +156,11 @@ const I18N = {
     table: 'tabla',
     view: 'vista',
     noRows: 'Sin registros.',
+    noMatches: 'Ningún registro coincide con la búsqueda.',
+    filterPlaceholder: 'Buscar filas…',
+    filterAll: 'Todas las columnas',
+    rowCount: '{0} fila(s)',
+    rowCountFiltered: '{0} de {1} fila(s)',
     cellUpdated: 'Celda actualizada.',
     rowAdded: 'Registro añadido. Haz doble clic en una celda para editarla.',
     addFail: 'No se pudo insertar el registro: {0}',
@@ -297,7 +309,7 @@ function applyI18n() {
   renderStatus();
   if (db) {
     renderSchema();
-    if (current) renderRows();
+    if (current) { fillFilterCols(); renderRows(); }
   }
 }
 
@@ -460,13 +472,26 @@ function loadObjectMeta() {
   }
   if (sortCol && sortCol !== 'rowid' && !columns.some(c => c.name === sortCol)) sortCol = null;
   $('btn-add-row').hidden = current.type === 'view' || !hasRowid;
+  fillFilterCols();
   $('btn-structure').hidden = current.type === 'view';
   $('btn-rename').hidden = current.type === 'view';
   $('readonly-note').hidden = !(current.type === 'view' || !hasRowid);
 }
 
+/* Rellena el selector de columna del buscador (conserva la selección si sigue existiendo) */
+function fillFilterCols() {
+  const names = (hasRowid ? ['rowid'] : []).concat(columns.map(c => c.name));
+  if (filterCol && !names.includes(filterCol)) filterCol = '';
+  $('filter-col').innerHTML = `<option value="">${esc(t('filterAll'))}</option>` +
+    names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  $('filter-col').value = filterCol;
+}
+
 function showObject(name, type) {
   current = { name, type };
+  filterText = '';
+  filterCol = '';
+  $('filter-input').value = '';
   sortCol = null;
   sortDir = 'ASC';
   addRowActive = false;
@@ -483,16 +508,42 @@ function showObject(name, type) {
   renderRows();
 }
 
+/* SELECT del listado actual (búsqueda + orden). includeRowid: añade rowid como primera columna */
+function buildListQuery(includeRowid) {
+  const params = [];
+  let where = '';
+  if (filterText) {
+    const target = filterCol
+      ? [filterCol]
+      : (hasRowid ? ['rowid'] : []).concat(columns.map(c => c.name));
+    const like = '%' + filterText.replace(/[\\%_]/g, '\\$&') + '%';
+    where = ' WHERE ' + target.map(n => {
+      params.push(like);
+      return `CAST(${n === 'rowid' && hasRowid ? 'rowid' : qi(n)} AS TEXT) LIKE ? ESCAPE '\\'`;
+    }).join(' OR ');
+  }
+  const orderBy = sortCol
+    ? ` ORDER BY ${sortCol === 'rowid' ? 'rowid' : qi(sortCol)} ${sortDir}` : '';
+  return {
+    sql: `SELECT ${includeRowid && hasRowid ? 'rowid, ' : ''}* FROM ${qi(current.name)}${where}${orderBy}`,
+    params
+  };
+}
+
 function renderRows() {
   const container = $('table-container');
   const editable = current.type === 'table' && hasRowid;
 
   try {
-    const orderBy = sortCol
-      ? ` ORDER BY ${sortCol === 'rowid' ? 'rowid' : qi(sortCol)} ${sortDir}` : '';
-    const res = db.exec(
-      `SELECT ${hasRowid ? 'rowid, ' : ''}* FROM ${qi(current.name)}${orderBy}`);
+    const q = buildListQuery(true);
+    const res = db.exec(q.sql, q.params);
     const rows = res.length ? res[0].values : [];
+    if (filterText) {
+      const total = db.exec(`SELECT COUNT(*) FROM ${qi(current.name)}`)[0].values[0][0];
+      $('row-count').textContent = t('rowCountFiltered', rows.length, total);
+    } else {
+      $('row-count').textContent = t('rowCount', rows.length);
+    }
 
     const thClass = col =>
       'sortable' + (sortCol === col ? ` sorted ${sortDir === 'ASC' ? 'asc' : 'desc'}` : '');
@@ -546,13 +597,38 @@ function renderRows() {
       html += '</tr>';
     }
 
-    html += rows.length ? '</tbody></table>' : `</tbody></table><p class="muted">${esc(t('noRows'))}</p>`;
+    html += rows.length ? '</tbody></table>'
+      : `</tbody></table><p class="muted">${esc(t(filterText ? 'noMatches' : 'noRows'))}</p>`;
     container.innerHTML = html;
 
   } catch (e) {
+    $('row-count').textContent = '';
     container.innerHTML = `<p class="error">${esc(e.message)}</p>`;
   }
 }
+
+/* Búsqueda / filtrado */
+
+let filterTimer = null;
+$('filter-input').addEventListener('input', e => {
+  clearTimeout(filterTimer);
+  filterTimer = setTimeout(() => {
+    filterText = e.target.value.trim();
+    if (current) renderRows();
+  }, 200);
+});
+$('filter-input').addEventListener('keydown', e => {
+  if (e.key === 'Escape' && e.target.value) {
+    e.target.value = '';
+    clearTimeout(filterTimer);
+    filterText = '';
+    if (current) renderRows();
+  }
+});
+$('filter-col').addEventListener('change', e => {
+  filterCol = e.target.value;
+  if (filterText && current) renderRows();
+});
 
 /* Edición de celdas (doble clic) */
 
@@ -807,8 +883,9 @@ function downloadCsv(name, columns, rows) {
 $('btn-export-csv').addEventListener('click', () => {
   if (!current) return;
   try {
-    const res = db.exec(`SELECT * FROM ${qi(current.name)}`);
-    if (!res.length) { setStatus(() => t('noRows')); return; }
+    const q = buildListQuery(false);
+    const res = db.exec(q.sql, q.params);
+    if (!res.length) { setStatus(() => t(filterText ? 'noMatches' : 'noRows')); return; }
     downloadCsv(current.name, res[0].columns, res[0].values);
   } catch (e) {
     setStatus(() => t('exportFail', e.message), true);
