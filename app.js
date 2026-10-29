@@ -657,11 +657,18 @@ $('pg-first').addEventListener('click', () => goToPage(0));
 $('pg-prev').addEventListener('click', () => goToPage(page - 1));
 $('pg-next').addEventListener('click', () => goToPage(page + 1));
 $('pg-last').addEventListener('click', () => goToPage(Infinity));
-$('pg-size').innerHTML = PAGE_SIZES.map(n => `<option value="${n}">${n}</option>`).join('');
+const sizeOptions = () => PAGE_SIZES.map(n => `<option value="${n}">${n}</option>`).join('');
+
+function setPageSize(n) {
+  pageSize = n;
+  try { localStorage.setItem('rs1-page-size', n); } catch (err) { /* sin almacenamiento */ }
+  $('pg-size').value = n;
+}
+
+$('pg-size').innerHTML = sizeOptions();
 $('pg-size').value = pageSize;
 $('pg-size').addEventListener('change', e => {
-  pageSize = Number(e.target.value);
-  try { localStorage.setItem('rs1-page-size', pageSize); } catch (err) { /* sin almacenamiento */ }
+  setPageSize(Number(e.target.value));
   page = 0;
   if (current) renderRows();
 });
@@ -957,8 +964,22 @@ $('btn-export-csv').addEventListener('click', () => {
   }
 });
 
+/* Tabla de resultados SQL con orden por columna y paginación en el cliente
+   (db.exec ya devuelve todas las filas). Devuelve un contenedor con tabla y paginador. */
 function buildResultTable(cols, rows) {
+  const wrap = document.createElement('div');
   const table = document.createElement('table');
+  const pager = document.createElement('nav');
+  pager.className = 'pager';
+  pager.innerHTML =
+    `<button class="pg-first" title="${esc(t('pageFirst'))}">«</button>` +
+    `<button class="pg-prev" title="${esc(t('pagePrev'))}">‹</button>` +
+    `<span class="pager-info"></span>` +
+    `<button class="pg-next" title="${esc(t('pageNext'))}">›</button>` +
+    `<button class="pg-last" title="${esc(t('pageLast'))}">»</button>` +
+    `<select class="pg-size" title="${esc(t('pageSizeLabel'))}" aria-label="${esc(t('pageSizeLabel'))}">${sizeOptions()}</select>`;
+  const q = sel => pager.querySelector(sel);
+  let p = 0;
   table.className = 'data';
   const thead = table.createTHead().insertRow();
   let sortIdx = -1;
@@ -978,9 +999,16 @@ function buildResultTable(cols, rows) {
     const old = table.tBodies[0];
     if (old) old.remove();
     const tbody = table.createTBody();
-    const data = sortIdx === -1 ? rows
+    const sorted = sortIdx === -1 ? rows
       : rows.slice().sort((x, y) => dir * cmp(x[sortIdx], y[sortIdx]));
-    for (const row of data) {
+    const pages = Math.max(1, Math.ceil(sorted.length / pageSize));
+    p = Math.min(Math.max(p, 0), pages - 1);
+    pager.hidden = sorted.length <= PAGE_SIZES[0];
+    q('.pager-info').textContent = `${p + 1} / ${pages}`;
+    q('.pg-first').disabled = q('.pg-prev').disabled = p === 0;
+    q('.pg-last').disabled = q('.pg-next').disabled = p >= pages - 1;
+    q('.pg-size').value = pageSize;
+    for (const row of sorted.slice(p * pageSize, (p + 1) * pageSize)) {
       const tr = tbody.insertRow();
       for (const v of row) {
         const td = tr.insertCell();
@@ -1008,13 +1036,26 @@ function buildResultTable(cols, rows) {
         cell.classList.toggle('asc', i === idx && dir === 1);
         cell.classList.toggle('desc', i === idx && dir === -1);
       }
+      p = 0;
       fillBody();
     });
     thead.appendChild(th);
   });
 
+  const goTo = n => { p = n; fillBody(); wrap.scrollIntoView({ block: 'nearest' }); };
+  q('.pg-first').addEventListener('click', () => goTo(0));
+  q('.pg-prev').addEventListener('click', () => goTo(p - 1));
+  q('.pg-next').addEventListener('click', () => goTo(p + 1));
+  q('.pg-last').addEventListener('click', () => goTo(Infinity));
+  q('.pg-size').addEventListener('change', e => {
+    setPageSize(Number(e.target.value));
+    p = 0;
+    fillBody();
+  });
+
   fillBody();
-  return table;
+  wrap.append(table, pager);
+  return wrap;
 }
 
 $('btn-run').addEventListener('click', runSQL);

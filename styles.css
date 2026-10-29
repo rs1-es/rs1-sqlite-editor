@@ -251,7 +251,7 @@ main {
   min-height: 0;
 }
 
-#pager {
+.pager {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -259,13 +259,22 @@ main {
   margin-top: 8px;
 }
 
-#pager button { min-width: 34px; }
+.pager button { min-width: 34px; }
 
-#pager button:disabled { opacity: .4; cursor: default; }
+.pager button:disabled { opacity: .4; cursor: default; }
 
-#pager-info { min-width: 70px; text-align: center; font-variant-numeric: tabular-nums; }
+.pager-info { min-width: 70px; text-align: center; font-variant-numeric: tabular-nums; }
 
-#pager select { padding: 5px 6px; }
+.pager select { padding: 5px 6px; }
+
+/* paginador de cada resultado SQL: siempre visible al pie mientras se ve su tabla */
+#sql-results .pager {
+  position: sticky;
+  bottom: 0;
+  margin-top: 0;
+  padding: 6px 0;
+  background: var(--panel);
+}
 
 table.data {
   border-collapse: collapse;
@@ -285,7 +294,7 @@ table.data th, table.data td {
 
 table.data th {
   position: sticky;
-  top: 0;
+  top: -1px; /* con border-collapse el borde superior deja un hueco de 1px por el que asoma la fila anterior */
   background: var(--surface);
   font-weight: 600;
   white-space: nowrap;
@@ -677,11 +686,11 @@ body.dragging::after {
   #filter-input, #filter-col { font-size: 16px; }
 
   /* paginador compacto: una sola fila, sin « » y botones de tamaño táctil */
-  #pager { gap: 4px; margin-top: 6px; }
-  #pager #pg-first, #pager #pg-last { display: none; }
-  #pager #pg-prev, #pager #pg-next { flex: 1; max-width: 90px; padding: 8px 10px; }
-  #pager-info { min-width: 56px; }
-  #pager select { font-size: 16px; padding: 6px 4px; }
+  .pager { gap: 4px; margin-top: 6px; }
+  .pager .pg-first, .pager .pg-last { display: none; }
+  .pager .pg-prev, .pager .pg-next { flex: 1; max-width: 90px; padding: 8px 10px; }
+  .pager-info { min-width: 56px; }
+  .pager select { font-size: 16px; padding: 6px 4px; }
 
   #sql-results table.data th, #sql-results table.data td { max-width: 220px; }
 }
