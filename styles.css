@@ -365,7 +365,16 @@ button.del:hover { text-decoration: underline; color: var(--danger); }
 
 /* ---------- Consola SQL ---------- */
 
-#sql-view { display: none; flex-direction: column; }
+/* Editor y botones fijos; solo los resultados hacen scroll (como la tabla de datos) */
+#sql-view {
+  display: none;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 280px;
+  overflow: hidden;
+}
+
+#sql-view > * { flex-shrink: 0; }
 
 #sql-input {
   font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
@@ -380,7 +389,7 @@ button.del:hover { text-decoration: underline; color: var(--danger); }
   color: var(--text);
 }
 
-#sql-results { margin-top: 10px; }
+#sql-results { margin-top: 10px; flex: 1 1 auto; min-height: 0; overflow: auto; }
 
 #sql-results .msg { padding: 4px 0; }
 #sql-results .ok { color: var(--ok); }
