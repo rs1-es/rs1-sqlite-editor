@@ -53,6 +53,7 @@ Para `styles.min.css` puede usarse cualquier minificador de CSS.
 
 ## Créditos y licencias
 
-- [sql.js](https://github.com/sql-js/sql.js) (incluido en `lib/`) tiene su propia licencia.
+- [sql.js](https://github.com/sql-js/sql.js) (incluido en `lib/`) se distribuye bajo licencia MIT;
+  el aviso completo está en [THIRD_PARTY.md](THIRD_PARTY.md).
 - Este proyecto se distribuye bajo la licencia [MIT](LICENSE). Los archivos de `lib/`
-  mantienen la de sql.js.
+  mantienen la suya.
