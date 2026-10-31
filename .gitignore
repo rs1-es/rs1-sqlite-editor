@@ -1,0 +1,25 @@
+# Variables de entorno y credenciales
+.env
+.env.*
+*.pem
+*.key
+
+# Bases de datos de prueba (el editor trabaja con archivos del usuario)
+*.sqlite
+*.sqlite3
+*.db
+*.db3
+
+# Script de despliegue personal (solo en local)
+deploy.sh
+
+# Dependencias y herramientas
+node_modules/
+.claude/settings.local.json
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
