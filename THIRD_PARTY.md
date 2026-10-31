@@ -1,11 +1,11 @@
-# Software de terceros
+# Third-party software
 
 ## sql.js
 
-Los archivos de `lib/` (`sql-wasm.js` y `sql-wasm.wasm`) son una compilación de
-[sql.js](https://github.com/sql-js/sql.js), que incluye SQLite 3.49.1 compilado a WebAssembly.
+The files in `lib/` (`sql-wasm.js` and `sql-wasm.wasm`) are a build of
+[sql.js](https://github.com/sql-js/sql.js), which includes SQLite 3.49.1 compiled to WebAssembly.
 
-sql.js se distribuye bajo la licencia MIT:
+sql.js is distributed under the MIT license:
 
 ```
 MIT License
@@ -31,4 +31,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-Texto original: <https://github.com/sql-js/sql.js/blob/master/LICENSE>
+Original text: <https://github.com/sql-js/sql.js/blob/master/LICENSE>

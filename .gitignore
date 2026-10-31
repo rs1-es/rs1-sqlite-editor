@@ -1,23 +1,23 @@
-# Variables de entorno y credenciales
+# Environment variables and credentials
 .env
 .env.*
 *.pem
 *.key
 
-# Bases de datos de prueba (el editor trabaja con archivos del usuario)
+# Test databases (the editor works with user files)
 *.sqlite
 *.sqlite3
 *.db
 *.db3
 
-# Script de despliegue personal (solo en local)
+# Personal deploy script (local only)
 deploy.sh
 
-# Dependencias y herramientas
+# Dependencies and tools
 node_modules/
 .claude/settings.local.json
 
-# Sistema y editores
+# System and editors
 .DS_Store
 Thumbs.db
 *.swp
