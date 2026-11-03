@@ -46,7 +46,9 @@ export function useDatabase(newDb, name) {
   $('sql-view').hidden = true;
 }
 
-function openFile(file) {
+// confirmed: the user was already asked (Open button, before the file picker)
+function openFile(file, confirmed = false) {
+  if (!confirmed && hasUnsavedChanges() && !confirm(t('confirmDiscard'))) return Promise.resolve();
   return file.arrayBuffer().then(buf => {
     try {
       const data = new Uint8Array(buf);
@@ -90,9 +92,12 @@ $('btn-new').addEventListener('click', newDatabase);
 
 /* ---------- Open and export ---------- */
 
-$('btn-open').addEventListener('click', () => $('file-input').click());
+$('btn-open').addEventListener('click', () => {
+  if (hasUnsavedChanges() && !confirm(t('confirmDiscard'))) return;
+  $('file-input').click();
+});
 $('file-input').addEventListener('change', e => {
-  if (e.target.files[0]) openFile(e.target.files[0]);
+  if (e.target.files[0]) openFile(e.target.files[0], true);
   e.target.value = '';
 });
 
