@@ -128,11 +128,11 @@ export function renderRows() {
       for (const c of state.columns) {
         const v = row[i++];
         if (v === null || v === undefined) {
-          html += `<td class="cell" data-col="${esc(c.name)}"><span class="null">NULL</span></td>`;
+          html += `<td class="cell" tabindex="-1" data-col="${esc(c.name)}"><span class="null">NULL</span></td>`;
         } else if (v instanceof Uint8Array) {
-          html += `<td class="cell" data-col="${esc(c.name)}" data-locked="1"><span class="blob">${BLOB_TEXT} (${v.length} B)</span></td>`;
+          html += `<td class="cell" tabindex="-1" data-col="${esc(c.name)}" data-locked="1"><span class="blob">${BLOB_TEXT} (${v.length} B)</span></td>`;
         } else {
-          html += `<td class="cell" data-col="${esc(c.name)}" ${editable ? '' : 'data-locked="1"'}>${esc(v)}</td>`;
+          html += `<td class="cell" tabindex="-1" data-col="${esc(c.name)}" ${editable ? '' : 'data-locked="1"'}>${esc(v)}</td>`;
         }
       }
       if (editable) {
@@ -162,12 +162,26 @@ export function renderRows() {
     html += rows.length ? '</tbody></table>'
       : `</tbody></table><p class="muted">${esc(t(state.filterText ? 'noMatches' : 'noRows'))}</p>`;
     container.innerHTML = html;
+    applyCellFocus(container);
 
   } catch (e) {
     $('row-count').textContent = '';
     $('pager').hidden = true;
     container.innerHTML = `<p class="error">${esc(e.message)}</p>`;
   }
+}
+
+// Roving tabindex: only one body cell is in the tab order; optionally give it focus again
+function applyCellFocus(container) {
+  const trs = container.querySelectorAll('tbody tr:not(.add-row)');
+  if (!trs.length) return;
+  const r = Math.min(state.cellPos.r, trs.length - 1);
+  const cells = trs[r].querySelectorAll('td.cell');
+  if (!cells.length) return;
+  const td = cells[Math.min(state.cellPos.c, cells.length - 1)];
+  td.tabIndex = 0;
+  if (state.refocusCell) td.focus();
+  state.refocusCell = false;
 }
 
 /* Pagination */

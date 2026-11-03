@@ -17,5 +17,7 @@ export const state = {
   sortCol: null,          // column the data view is sorted by
   sortDir: 'ASC',
   addRowActive: false,    // "new record" row in progress (not inserted yet)
-  addDraft: []            // values typed in the new row
+  addDraft: [],           // values typed in the new row
+  cellPos: { r: 0, c: 0 },// keyboard-focused cell (row/column index within the page)
+  refocusCell: false      // give focus back to that cell after the next render
 };

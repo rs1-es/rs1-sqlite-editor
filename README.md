@@ -12,7 +12,7 @@ Live version: <https://sqlite.rs1.es>
   new one and export the modified file. Changes are kept in memory until you export.
 - Browse tables and views with pagination, column sorting and text search (across all
   columns or a single one).
-- Edit cells by double-clicking, add and delete rows.
+- Edit cells by double-clicking or from the keyboard (arrow keys to move, Enter/F2 to edit, Escape to cancel, Delete to set NULL), add and delete rows.
 - Create tables with a dialog, rename them, drop them and change their structure.
 - SQL tab to run statements (Ctrl+Enter), with sortable, paginated results.
 - Import CSV, and export the current listing or an SQL result to CSV.

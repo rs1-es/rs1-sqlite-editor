@@ -8,9 +8,8 @@ import { $, qi } from './util.js';
 
 const tableContainer = $('table-container');
 
-tableContainer.addEventListener('dblclick', e => {
-  const td = e.target.closest('td.cell');
-  if (!td || td.dataset.locked || state.current.type !== 'table' || !state.hasRowid) return;
+function startEdit(td) {
+  if (td.dataset.locked || state.current.type !== 'table' || !state.hasRowid) return;
   td.dataset.original = td.textContent;
   td.dataset.originalHtml = td.innerHTML;
   td.contentEditable = 'true';
@@ -20,11 +19,73 @@ tableContainer.addEventListener('dblclick', e => {
   const sel = window.getSelection();
   sel.removeAllRanges();
   sel.addRange(range);
+}
+
+tableContainer.addEventListener('dblclick', e => {
+  const td = e.target.closest('td.cell');
+  if (td) startEdit(td);
+});
+
+// Keep the roving tabindex and the remembered position in sync with focus
+tableContainer.addEventListener('focusin', e => {
+  const td = e.target.closest('td.cell:not(.add-cell)');
+  if (!td || td.isContentEditable) return;
+  const tr = td.parentElement;
+  state.cellPos = {
+    r: [...tr.parentElement.children].filter(x => !x.classList.contains('add-row')).indexOf(tr),
+    c: [...tr.querySelectorAll('td.cell')].indexOf(td)
+  };
+  tableContainer.querySelectorAll('td.cell[tabindex="0"]').forEach(x => { if (x !== td) x.tabIndex = -1; });
+  td.tabIndex = 0;
+});
+
+// Grid navigation on a focused (not editing) cell
+tableContainer.addEventListener('keydown', e => {
+  const td = e.target.closest('td.cell:not(.add-cell)');
+  if (!td || td !== e.target || td.isContentEditable || e.altKey) return;
+  const tr = td.parentElement;
+  const cells = [...tr.querySelectorAll('td.cell')];
+  const rows = [...tr.parentElement.children].filter(x => !x.classList.contains('add-row'));
+  const ci = cells.indexOf(td), ri = rows.indexOf(tr);
+  const goto = (r, c) => {
+    const row = rows[Math.max(0, Math.min(rows.length - 1, r))];
+    const cs = row.querySelectorAll('td.cell');
+    cs[Math.max(0, Math.min(cs.length - 1, c))].focus();
+  };
+  switch (e.key) {
+    case 'ArrowRight': goto(ri, ci + 1); break;
+    case 'ArrowLeft': goto(ri, ci - 1); break;
+    case 'ArrowDown': goto(ri + 1, ci); break;
+    case 'ArrowUp': goto(ri - 1, ci); break;
+    case 'Home': e.ctrlKey ? goto(0, 0) : goto(ri, 0); break;
+    case 'End': e.ctrlKey ? goto(rows.length - 1, cells.length - 1) : goto(ri, cells.length - 1); break;
+    case 'PageDown': goto(rows.length - 1, ci); break;
+    case 'PageUp': goto(0, ci); break;
+    case 'F2': case 'Enter':
+      if (td.dataset.locked) return;
+      td.dataset.refocus = '1';
+      startEdit(td);
+      e.stopImmediatePropagation(); // don't let the editing handler see this same keydown
+      e.preventDefault();
+      return;
+    case 'Delete': case 'Backspace': {
+      if (td.dataset.locked || state.current.type !== 'table' || !state.hasRowid) return;
+      const colDef = state.columns.find(c => c.name === td.dataset.col);
+      if (colDef && colDef.notnull) { setStatus(() => t('cellNotNull'), true); break; }
+      if (td.querySelector('.null')) break;
+      state.refocusCell = true;
+      commitCell(td, null);
+      break;
+    }
+    default: return;
+  }
+  e.preventDefault();
 });
 
 tableContainer.addEventListener('keydown', e => {
   const td = e.target.closest('td.cell[contenteditable="true"]');
   if (!td) return;
+  td.dataset.refocus = '1';
   if (e.key === 'Enter') { e.preventDefault(); td.blur(); }
   if (e.key === 'Escape') { td.dataset.cancel = '1'; td.blur(); }
 });
@@ -34,15 +95,21 @@ tableContainer.addEventListener('focusout', e => {
   if (!td) return;
   td.contentEditable = 'false';
   const newVal = td.textContent;
+  const refocus = !!td.dataset.refocus;
+  delete td.dataset.refocus;
+  const back = () => { if (refocus) setTimeout(() => td.focus(), 0); };
   if (td.dataset.cancel) {
     delete td.dataset.cancel;
     td.innerHTML = td.dataset.originalHtml;
+    back();
     return;
   }
-  if (newVal === td.dataset.original) return;
+  if (newVal === td.dataset.original) { back(); return; }
+  state.refocusCell = refocus;
   commitCell(td, newVal);
 });
 
+// newVal === null sets NULL explicitly; an empty string follows the column's NOT NULL rule
 function commitCell(td, newVal) {
   const rowid = td.closest('tr').querySelector('button.del').dataset.rowid;
   const col = td.dataset.col;
