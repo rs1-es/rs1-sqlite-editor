@@ -5,7 +5,7 @@ import { setPageSize, sizeOptions } from './paging.js';
 import { refreshSchema } from './schema.js';
 import { state } from './state.js';
 import { setStatus } from './status.js';
-import { $, BLOB_TEXT, PAGE_SIZES, esc } from './util.js';
+import { $, BLOB_TEXT, PAGE_SIZES, esc, rescuePagerFocus } from './util.js';
 
 /* ---------- SQL console ---------- */
 
@@ -125,6 +125,7 @@ function buildResultTable(cols, rows) {
     q('.pager-info').textContent = `${p + 1} / ${pages}`;
     q('.pg-first').disabled = q('.pg-prev').disabled = p === 0;
     q('.pg-last').disabled = q('.pg-next').disabled = p >= pages - 1;
+    rescuePagerFocus(q('.pg-first'), q('.pg-prev'), q('.pg-next'), q('.pg-last'));
     q('.pg-size').value = state.pageSize;
     for (const row of sorted.slice(p * state.pageSize, (p + 1) * state.pageSize)) {
       const tr = tbody.insertRow();

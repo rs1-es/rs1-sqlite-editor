@@ -22,3 +22,12 @@ export function displayDefault(d) {
   }
   return s.toUpperCase() === 'NULL' ? '' : s;
 }
+
+/* A pager button that becomes disabled while focused would drop keyboard focus:
+   move it to the button that now leads back into the page range. */
+export function rescuePagerFocus(first, prev, next, last) {
+  const a = document.activeElement;
+  if (![first, prev, next, last].includes(a) || !a.disabled) return;
+  const target = (a === first || a === prev) ? next : prev;
+  if (!target.disabled) target.focus();
+}

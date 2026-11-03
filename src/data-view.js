@@ -3,7 +3,7 @@ import { setPageSize, sizeOptions } from './paging.js';
 import { renderSchema } from './schema.js';
 import { state } from './state.js';
 import { switchTab } from './tabs.js';
-import { $, BLOB_TEXT, PAGE_SIZES, displayDefault, esc, qi } from './util.js';
+import { $, BLOB_TEXT, PAGE_SIZES, displayDefault, esc, qi, rescuePagerFocus } from './util.js';
 
 /* ---------- Data view ---------- */
 
@@ -202,6 +202,7 @@ function renderPager(matches, shown, pages) {
   $('pager-info').textContent = `${state.page + 1} / ${pages}`;
   $('pg-first').disabled = $('pg-prev').disabled = state.page === 0;
   $('pg-last').disabled = $('pg-next').disabled = state.page >= pages - 1;
+  rescuePagerFocus($('pg-first'), $('pg-prev'), $('pg-next'), $('pg-last'));
 }
 
 function goToPage(n) {
