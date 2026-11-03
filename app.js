@@ -370,6 +370,9 @@ function useDatabase(newDb, name) {
   db = newDb;
   savedSignature = dbSignature();
   fileName = name;
+  $('db-name-text').textContent = name;
+  $('db-name').title = name;
+  $('db-name').hidden = false;
   current = null;
   addRowActive = false;
   addDraft = [];
