@@ -1,0 +1,24 @@
+export const BLOB_TEXT = '[blob]';
+
+export const $ = id => document.getElementById(id);
+
+export const PAGE_SIZES = [50, 100, 250, 500];
+export function loadPageSize() {
+  try {
+    const n = Number(localStorage.getItem('rs1-page-size'));
+    return PAGE_SIZES.includes(n) ? n : 100;
+  } catch (e) { return 100; }
+}
+export const qi = n => '"' + String(n).replace(/"/g, '""') + '"';
+export const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/* Valor por defecto (según PRAGMA table_info) para mostrar como pista */
+export function displayDefault(d) {
+  if (d === null || d === undefined) return '';
+  const s = String(d);
+  if (s.length >= 2 && s.startsWith("'") && s.endsWith("'")) {
+    return s.slice(1, -1).replace(/''/g, "'");
+  }
+  return s.toUpperCase() === 'NULL' ? '' : s;
+}

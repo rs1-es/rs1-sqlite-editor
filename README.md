@@ -23,13 +23,14 @@ Live version: <https://sqlite.rs1.es>
 | File | Description |
 |---|---|
 | `index.html` | Page markup |
-| `app.js` / `app.min.js` | Application logic (source and minified version) |
+| `src/` | Application source, as ES modules (entry point: `src/main.js`) |
+| `app.min.js` | Application bundle generated from `src/` (what `index.html` loads) |
 | `styles.css` / `styles.min.css` | Styles (source and minified version) |
 | `package.json` | Build scripts (`npm run build`) |
 | `lib/` | sql.js `sql-wasm.js` and `sql-wasm.wasm`, served from the site itself |
 
-`index.html` loads the **minified** versions, so after editing `app.js` or `styles.css` you
-need to regenerate them (see [Building](#building)).
+`index.html` loads the **generated** `app.min.js` and `styles.min.css`, so after editing `src/` or
+`styles.css` you need to regenerate them (see [Building](#building)).
 
 ## Running locally
 
@@ -43,8 +44,9 @@ python3 -m http.server 8000
 
 ## Building
 
-The `.min` files are generated with [UglifyJS](https://github.com/mishoo/UglifyJS) and
-[clean-css](https://github.com/clean-css/clean-css). You need Node.js:
+`app.min.js` is bundled and minified from `src/` with [esbuild](https://esbuild.github.io/), and
+`styles.min.css` is minified with [clean-css](https://github.com/clean-css/clean-css). You need
+Node.js:
 
 ```bash
 npm install      # once
@@ -53,6 +55,23 @@ npm run build    # regenerates app.min.js and styles.min.css
 
 You can also run `npm run build:js` or `npm run build:css` separately, and `npm run serve`
 starts the local server described above.
+
+## Source modules
+
+| Module | Responsibility |
+|---|---|
+| `main.js` | Entry point: applies the language and starts the app |
+| `state.js` | Shared mutable state (`state.db`, `state.current`, `state.page`…) |
+| `util.js` | DOM and SQL-quoting helpers, constants |
+| `i18n.js` / `status.js` / `theme.js` | Translations, status bar, light/dark theme |
+| `database.js` | Open, create and export databases, drag and drop, unsaved-changes warning |
+| `schema.js` / `tabs.js` | Table and view list in the sidebar, Data/SQL tabs |
+| `data-view.js` / `paging.js` | Table browser: rows, sorting, search, pagination |
+| `edit-rows.js` | Cell editing and adding/deleting rows |
+| `sql-console.js` | SQL tab and its paginated results |
+| `csv.js` | Pure CSV functions (parse, serialize, type inference) |
+| `csv-export.js` / `csv-import.js` | CSV export and the import dialog |
+| `new-table.js` / `structure.js` / `table-actions.js` | Create tables, edit columns and indexes, rename and drop |
 
 ## Credits and licenses
 

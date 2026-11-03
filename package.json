@@ -6,12 +6,12 @@
   "license": "MIT",
   "scripts": {
     "build": "npm run build:js && npm run build:css",
-    "build:js": "uglifyjs app.js -o app.min.js",
+    "build:js": "esbuild src/main.js --bundle --minify --format=iife --target=es2020 --outfile=app.min.js",
     "build:css": "cleancss -o styles.min.css styles.css",
     "serve": "python3 -m http.server 8000"
   },
   "devDependencies": {
     "clean-css-cli": "^5.6.3",
-    "uglify-js": "^3.19.3"
+    "esbuild": "^0.28.2"
   }
 }
