@@ -323,14 +323,17 @@ function renderStatus() {
 function applyI18n() {
   document.documentElement.lang = lang;
   document.body.dataset.dragText = t('dragHint');
-  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+  // data-i18n-args: argumentos (JSON) de textos que se generan al ejecutar, como los resultados SQL
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18n, ...JSON.parse(el.dataset.i18nArgs || '[]'));
+  });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
   $('btn-lang').textContent = lang === 'en' ? 'ES' : 'EN';
   renderStatus();
   if (db) {
     renderSchema();
-    if (current) { fillFilterCols(); renderRows(); }
+    if (current) { fillFilterCols(); renderBadge(); renderRows(); }
   }
 }
 
@@ -511,6 +514,10 @@ function fillFilterCols() {
   $('filter-col').value = filterCol;
 }
 
+function renderBadge() {
+  $('table-badge').textContent = t(current.type === 'view' ? 'view' : 'table');
+}
+
 function showObject(name, type) {
   current = { name, type };
   filterText = '';
@@ -524,7 +531,7 @@ function showObject(name, type) {
   loadObjectMeta();
 
   $('table-title').textContent = name;
-  $('table-badge').textContent = t(type === 'view' ? 'view' : 'table');
+  renderBadge();
   $('welcome').hidden = true;
   $('sql-view').hidden = true;
   $('table-view').hidden = false;
@@ -896,15 +903,20 @@ function runSQL() {
     const results = db.exec(sql);
     const modified = totalChanges() - before;
     if (!results.length) {
-      out.innerHTML = `<p class="msg ok">${esc(t('executed', modified))}</p>`;
+      out.innerHTML = `<p class="msg ok" data-i18n="executed" data-i18n-args="[${modified}]">` +
+        `${esc(t('executed', modified))}</p>`;
     } else {
       results.forEach((r, i) => {
         const head = document.createElement('div');
         head.className = 'result-head';
         const h = document.createElement('h4');
+        h.dataset.i18n = 'resultN';
+        h.dataset.i18nArgs = JSON.stringify([i + 1, r.values.length]);
         h.textContent = t('resultN', i + 1, r.values.length);
         const csvBtn = document.createElement('button');
         csvBtn.className = 'csv-export';
+        csvBtn.dataset.i18n = 'exportCsv';
+        csvBtn.dataset.i18nTitle = 'csvTooltip';
         csvBtn.textContent = t('exportCsv');
         csvBtn.title = t('csvTooltip');
         csvBtn.addEventListener('click', () =>
@@ -917,6 +929,8 @@ function runSQL() {
       if (modified > 0) {
         const p = document.createElement('p');
         p.className = 'msg ok';
+        p.dataset.i18n = 'rowsAffected';
+        p.dataset.i18nArgs = JSON.stringify([modified]);
         p.textContent = t('rowsAffected', modified);
         out.appendChild(p);
       }
@@ -977,12 +991,12 @@ function buildResultTable(cols, rows) {
   const pager = document.createElement('nav');
   pager.className = 'pager';
   pager.innerHTML =
-    `<button class="pg-first" title="${esc(t('pageFirst'))}">«</button>` +
-    `<button class="pg-prev" title="${esc(t('pagePrev'))}">‹</button>` +
+    `<button class="pg-first" data-i18n-title="pageFirst" title="${esc(t('pageFirst'))}">«</button>` +
+    `<button class="pg-prev" data-i18n-title="pagePrev" title="${esc(t('pagePrev'))}">‹</button>` +
     `<span class="pager-info"></span>` +
-    `<button class="pg-next" title="${esc(t('pageNext'))}">›</button>` +
-    `<button class="pg-last" title="${esc(t('pageLast'))}">»</button>` +
-    `<select class="pg-size" title="${esc(t('pageSizeLabel'))}" aria-label="${esc(t('pageSizeLabel'))}">${sizeOptions()}</select>`;
+    `<button class="pg-next" data-i18n-title="pageNext" title="${esc(t('pageNext'))}">›</button>` +
+    `<button class="pg-last" data-i18n-title="pageLast" title="${esc(t('pageLast'))}">»</button>` +
+    `<select class="pg-size" data-i18n-title="pageSizeLabel" title="${esc(t('pageSizeLabel'))}">${sizeOptions()}</select>`;
   const q = sel => pager.querySelector(sel);
   let p = 0;
   table.className = 'data';
@@ -1032,6 +1046,7 @@ function buildResultTable(cols, rows) {
     const th = document.createElement('th');
     th.textContent = c;
     th.classList.add('sortable');
+    th.dataset.i18nTitle = 'sortHint';
     th.title = t('sortHint');
     th.addEventListener('click', () => {
       dir = sortIdx === idx ? -dir : 1;
