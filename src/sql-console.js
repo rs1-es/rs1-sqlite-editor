@@ -40,7 +40,7 @@ function runSQL() {
       results.forEach((r, i) => {
         const head = document.createElement('div');
         head.className = 'result-head';
-        const h = document.createElement('h4');
+        const h = document.createElement('h2');
         h.dataset.i18n = 'resultN';
         h.dataset.i18nArgs = JSON.stringify([i + 1, r.values.length]);
         h.textContent = t('resultN', i + 1, r.values.length);
@@ -85,13 +85,17 @@ function buildResultTable(cols, rows) {
   const table = document.createElement('table');
   const pager = document.createElement('nav');
   pager.className = 'pager';
+  pager.dataset.i18nLabel = 'paginationLabel';
+  pager.setAttribute('aria-label', t('paginationLabel'));
+  // title and aria-label are kept in sync with the language by applyI18n (data-i18n-title / data-i18n-label)
+  const pgAttrs = key => `data-i18n-title="${key}" data-i18n-label="${key}" title="${esc(t(key))}" aria-label="${esc(t(key))}"`;
   pager.innerHTML =
-    `<button class="pg-first" data-i18n-title="pageFirst" title="${esc(t('pageFirst'))}">«</button>` +
-    `<button class="pg-prev" data-i18n-title="pagePrev" title="${esc(t('pagePrev'))}">‹</button>` +
+    `<button class="pg-first" ${pgAttrs('pageFirst')}>«</button>` +
+    `<button class="pg-prev" ${pgAttrs('pagePrev')}>‹</button>` +
     `<span class="pager-info"></span>` +
-    `<button class="pg-next" data-i18n-title="pageNext" title="${esc(t('pageNext'))}">›</button>` +
-    `<button class="pg-last" data-i18n-title="pageLast" title="${esc(t('pageLast'))}">»</button>` +
-    `<select class="pg-size" data-i18n-title="pageSizeLabel" title="${esc(t('pageSizeLabel'))}">${sizeOptions()}</select>`;
+    `<button class="pg-next" ${pgAttrs('pageNext')}>›</button>` +
+    `<button class="pg-last" ${pgAttrs('pageLast')}>»</button>` +
+    `<select class="pg-size" ${pgAttrs('pageSizeLabel')}>${sizeOptions()}</select>`;
   const q = sel => pager.querySelector(sel);
   let p = 0;
   table.className = 'data';
@@ -143,6 +147,10 @@ function buildResultTable(cols, rows) {
     th.classList.add('sortable');
     th.dataset.i18nTitle = 'sortHint';
     th.title = t('sortHint');
+    th.tabIndex = 0;
+    th.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); th.click(); }
+    });
     th.addEventListener('click', () => {
       dir = sortIdx === idx ? -dir : 1;
       sortIdx = idx;
@@ -150,6 +158,8 @@ function buildResultTable(cols, rows) {
         cell.classList.toggle('sorted', i === idx);
         cell.classList.toggle('asc', i === idx && dir === 1);
         cell.classList.toggle('desc', i === idx && dir === -1);
+        if (i === idx) cell.setAttribute('aria-sort', dir === 1 ? 'ascending' : 'descending');
+        else cell.removeAttribute('aria-sort');
       }
       p = 0;
       fillBody();

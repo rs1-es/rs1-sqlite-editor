@@ -104,16 +104,22 @@ export function renderRows() {
     const thClass = col =>
       'sortable' + (state.sortCol === col ? ` sorted ${state.sortDir === 'ASC' ? 'asc' : 'desc'}` : '');
 
-    let html = '<table class="data"><thead><tr>';
+    // sortable headers are keyboard-focusable and expose the current sort to assistive technology
+    const sortAttrs = col => 'tabindex="0"' + (state.sortCol === col
+      ? ` aria-sort="${state.sortDir === 'ASC' ? 'ascending' : 'descending'}"` : '');
+
+    let html = `<table class="data" aria-label="${esc(state.current.name)}"><thead><tr>`;
     if (state.hasRowid) {
-      html += `<th class="${thClass('rowid')}" data-sort="rowid" title="${esc(t('sortHint'))}">` +
+      html += `<th class="${thClass('rowid')}" data-sort="rowid" ${sortAttrs('rowid')} title="${esc(t('sortHint'))}">` +
         `rowid<span class="sort-arrow"></span></th>`;
     }
     for (const c of state.columns) {
-      html += `<th class="${thClass(c.name)}" data-sort="${esc(c.name)}" title="${esc(t('sortHint'))}">` +
+      html += `<th class="${thClass(c.name)}" data-sort="${esc(c.name)}" ${sortAttrs(c.name)} title="${esc(t('sortHint'))}">` +
         `${esc(c.name)}<small>${esc(c.type || '')}</small><span class="sort-arrow"></span></th>`;
     }
-    html += editable ? '<th></th></tr></thead><tbody>' : '</tr></thead><tbody>';
+    html += editable
+      ? `<th><span class="sr-only">${esc(t('rowActions'))}</span></th></tr></thead><tbody>`
+      : '</tr></thead><tbody>';
 
     for (const row of rows) {
       let i = 0;
@@ -130,7 +136,7 @@ export function renderRows() {
         }
       }
       if (editable) {
-        html += `<td><button class="del" data-rowid="${row[0]}" title="${esc(t('deleteRow'))}">✕</button></td>`;
+        html += `<td><button class="del" data-rowid="${row[0]}" title="${esc(t('deleteRow'))}" aria-label="${esc(t('deleteRow'))}">✕</button></td>`;
       }
       html += '</tr>';
     }
@@ -142,14 +148,14 @@ export function renderRows() {
         const req = c.notnull && c.dflt == null;
         const ph = req ? '' : displayDefault(c.dflt);
         html += `<td class="cell add-cell${req ? ' req' : ''}">` +
-          `<input data-idx="${i}" value="${esc(state.addDraft[i] || '')}"` +
+          `<input data-idx="${i}" aria-label="${esc(c.name)}" value="${esc(state.addDraft[i] || '')}"` +
           (ph ? ` placeholder="${esc(ph)}"` : '') +
           (req ? ` title="${esc(t('notNullHint'))}" aria-required="true"` : '') +
           '></td>';
       });
       html += `<td class="add-actions">` +
-        `<button class="confirm-add" title="${esc(t('confirmAdd'))}">✓</button>` +
-        `<button class="cancel-add" title="${esc(t('cancelAdd'))}">✕</button></td>`;
+        `<button class="confirm-add" title="${esc(t('confirmAdd'))}" aria-label="${esc(t('confirmAdd'))}">✓</button>` +
+        `<button class="cancel-add" title="${esc(t('cancelAdd'))}" aria-label="${esc(t('cancelAdd'))}">✕</button></td>`;
       html += '</tr>';
     }
 

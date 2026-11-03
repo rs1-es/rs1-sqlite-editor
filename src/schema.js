@@ -24,15 +24,17 @@ export function refreshSchema() {
 export function renderSchema() {
   const tables = state.objects.filter(o => o.type === 'table');
   const views = state.objects.filter(o => o.type === 'view');
-  const item = o =>
-    `<li data-name="${esc(o.name)}" data-type="${o.type}" ` +
-    `class="${state.current && state.current.name === o.name ? 'active' : ''}">` +
-    `<span class="icon">${o.type === 'view' ? '👁' : '🗄'}</span>${esc(o.name)}</li>`;
+  const item = o => {
+    const active = state.current && state.current.name === o.name;
+    return `<li data-name="${esc(o.name)}" data-type="${o.type}" class="${active ? 'active' : ''}">` +
+      `<button type="button" class="obj"${active ? ' aria-current="true"' : ''}>` +
+      `<span class="icon" aria-hidden="true">${o.type === 'view' ? '👁' : '🗄'}</span>${esc(o.name)}</button></li>`;
+  };
 
   $('schema-list').innerHTML =
-    `<h3>${esc(t('tables'))} (${tables.length})</h3><ul>` +
+    `<h2>${esc(t('tables'))} (${tables.length})</h2><ul>` +
     (tables.length ? tables.map(item).join('') : `<li class="empty">${esc(t('noTables'))}</li>`) +
-    `</ul><h3>${esc(t('views'))} (${views.length})</h3><ul>` +
+    `</ul><h2>${esc(t('views'))} (${views.length})</h2><ul>` +
     (views.length ? views.map(item).join('') : `<li class="empty">${esc(t('noViews'))}</li>`) +
     '</ul>';
 }
@@ -42,6 +44,11 @@ $('schema-list').addEventListener('click', e => {
   if (li) {
     showObject(li.dataset.name, li.dataset.type);
     $('sidebar').classList.remove('open');
+    // the list was re-rendered: keep keyboard focus on the selected item, or move it to the
+    // content when the sidebar is hidden (small screens)
+    const btn = $('schema-list').querySelector('li.active button');
+    if (btn) btn.focus();
+    if (!btn || document.activeElement !== btn) $('main').focus();
   }
 });
 

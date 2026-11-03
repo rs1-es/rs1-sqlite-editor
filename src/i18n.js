@@ -52,6 +52,11 @@ const I18N = {
     needTableName: 'Enter a table name.',
     needColumns: 'Add at least one column with a name.',
     removeColumn: 'Remove column',
+    skipLink: 'Skip to content',
+    filterColLabel: 'Search in column',
+    sqlLabel: 'SQL query',
+    paginationLabel: 'Pagination',
+    rowActions: 'Actions',
     // HTML
     newBtn: 'New database',
     newTableBtn: '+ New table',
@@ -175,6 +180,11 @@ const I18N = {
     needTableName: 'Indica un nombre para la tabla.',
     needColumns: 'Añade al menos una columna con nombre.',
     removeColumn: 'Quitar columna',
+    skipLink: 'Saltar al contenido',
+    filterColLabel: 'Buscar en la columna',
+    sqlLabel: 'Consulta SQL',
+    paginationLabel: 'Paginación',
+    rowActions: 'Acciones',
     // HTML
     newBtn: 'Nueva base de datos',
     newTableBtn: '+ Nueva tabla',

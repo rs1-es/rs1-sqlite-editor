@@ -25,7 +25,11 @@ function applyI18n() {
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.dataset.i18nTitle); });
+  // data-i18n-label: accessible name (aria-label) for controls with no visible text or just a symbol
+  document.querySelectorAll('[data-i18n-label]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nLabel)); });
   $('btn-lang').textContent = lang === 'en' ? 'ES' : 'EN';
+  // the accessible name must contain the visible text (WCAG 2.5.3)
+  $('btn-lang').setAttribute('aria-label', `${$('btn-lang').textContent} – ${t('langTooltip')}`);
   renderStatus();
   if (state.db) {
     renderSchema();

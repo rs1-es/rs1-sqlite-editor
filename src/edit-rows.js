@@ -124,6 +124,12 @@ tableContainer.addEventListener('input', e => {
   if (inp) state.addDraft[Number(inp.dataset.idx)] = inp.value;
 });
 
+// Enter / Space on a sortable header sorts, like a click
+tableContainer.addEventListener('keydown', e => {
+  const th = e.target.closest('th.sortable');
+  if (th && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); th.click(); }
+});
+
 tableContainer.addEventListener('keydown', e => {
   const inp = e.target.closest('tr.add-row input');
   if (!inp) return;
@@ -145,6 +151,9 @@ tableContainer.addEventListener('click', e => {
     else { state.sortCol = col; state.sortDir = 'ASC'; }
     state.page = 0;
     renderRows();
+    // the table was re-rendered: keep keyboard focus on the same header
+    const same = [...tableContainer.querySelectorAll('th.sortable')].find(h => h.dataset.sort === col);
+    if (same) same.focus();
     return;
   }
   const btn = e.target.closest('button.del');

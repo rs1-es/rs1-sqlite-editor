@@ -13,6 +13,11 @@ function structError(msg) {
   el.hidden = !msg;
 }
 
+/* Header cell; an empty label (actions column) is kept for screen readers only */
+function headerCell(x) {
+  return x ? `<th>${esc(x)}</th>` : `<th><span class="sr-only">${esc(t('rowActions'))}</span></th>`;
+}
+
 function renderStructure() {
   const tbl = state.current.name;
   $('struct-title').textContent = t('structTitle', tbl);
@@ -20,13 +25,13 @@ function renderStructure() {
 
   let h = '<div class="tbl-scroll"><table class="data"><thead><tr>' +
     [t('colName'), t('colType'), 'PK', 'NN', t('defaultVal'), '']
-      .map(x => `<th>${esc(x)}</th>`).join('') + '</tr></thead><tbody>';
+      .map(headerCell).join('') + '</tr></thead><tbody>';
   for (const c of state.columns) {
     h += `<tr><td>${esc(c.name)}</td><td>${esc(c.type || '')}</td>` +
       `<td>${c.pk ? '✓' : ''}</td><td>${c.notnull ? '✓' : ''}</td>` +
       `<td>${esc(displayDefault(c.dflt))}</td><td class="nowrap">` +
-      `<button type="button" data-act="rn-col" data-col="${esc(c.name)}" title="${esc(t('renameBtn'))}">✎</button> ` +
-      `<button type="button" class="del" data-act="drop-col" data-col="${esc(c.name)}" title="${esc(t('dropBtn'))}">✕</button>` +
+      `<button type="button" data-act="rn-col" data-col="${esc(c.name)}" title="${esc(t('renameBtn'))}" aria-label="${esc(t('renameBtn'))}">✎</button> ` +
+      `<button type="button" class="del" data-act="drop-col" data-col="${esc(c.name)}" title="${esc(t('dropBtn'))}" aria-label="${esc(t('dropBtn'))}">✕</button>` +
       '</td></tr>';
   }
   $('struct-cols').innerHTML = h + '</tbody></table></div>';
@@ -38,13 +43,13 @@ function renderStructure() {
   } else {
     let ih = '<div class="tbl-scroll"><table class="data"><thead><tr>' +
       [t('idxName'), t('idxCols'), t('idxUnique'), '']
-        .map(x => `<th>${esc(x)}</th>`).join('') + '</tr></thead><tbody>';
+        .map(headerCell).join('') + '</tr></thead><tbody>';
     for (const r of idxs) {
       const info = state.db.exec(`PRAGMA index_info(${qi(r[1])})`);
       const cols = (info.length ? info[0].values : []).map(x => x[2] === null ? '(expr)' : x[2]).join(', ');
       ih += `<tr><td>${esc(r[1])}</td><td>${esc(cols)}</td><td>${r[2] ? '✓' : ''}</td><td class="nowrap">` +
         (r[3] === 'c'
-          ? `<button type="button" class="del" data-act="drop-idx" data-idx="${esc(r[1])}" title="${esc(t('dropBtn'))}">✕</button>`
+          ? `<button type="button" class="del" data-act="drop-idx" data-idx="${esc(r[1])}" title="${esc(t('dropBtn'))}" aria-label="${esc(t('dropBtn'))}">✕</button>`
           : `<span class="muted">${esc(t('idxAuto'))}</span>`) + '</td></tr>';
     }
     $('struct-idx').innerHTML = ih + '</tbody></table></div>';

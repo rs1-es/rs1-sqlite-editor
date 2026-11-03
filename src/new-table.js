@@ -14,15 +14,15 @@ function ntAddColumn(def = {}) {
   const tr = ntBody.insertRow();
   const type = def.type || 'TEXT';
   tr.innerHTML =
-    `<td><input class="c-name" type="text" spellcheck="false" value="${esc(def.name || '')}"></td>` +
-    `<td><select class="c-type">${COL_TYPES.map(x =>
+    `<td><input class="c-name" type="text" spellcheck="false" aria-label="${esc(t('colName'))}" value="${esc(def.name || '')}"></td>` +
+    `<td><select class="c-type" aria-label="${esc(t('colType'))}">${COL_TYPES.map(x =>
       `<option${x === type ? ' selected' : ''}>${x}</option>`).join('')}</select></td>` +
-    `<td><input class="c-pk" type="checkbox"${def.pk ? ' checked' : ''}></td>` +
-    `<td><input class="c-ai" type="checkbox"${def.ai ? ' checked' : ''}></td>` +
-    `<td><input class="c-nn" type="checkbox"></td>` +
-    `<td><input class="c-uq" type="checkbox"></td>` +
-    `<td><input class="c-def" type="text" spellcheck="false"></td>` +
-    `<td><button type="button" class="del c-rm" title="${esc(t('removeColumn'))}">✕</button></td>`;
+    `<td><input class="c-pk" type="checkbox" aria-label="PRIMARY KEY"${def.pk ? ' checked' : ''}></td>` +
+    `<td><input class="c-ai" type="checkbox" aria-label="AUTOINCREMENT"${def.ai ? ' checked' : ''}></td>` +
+    `<td><input class="c-nn" type="checkbox" aria-label="NOT NULL"></td>` +
+    `<td><input class="c-uq" type="checkbox" aria-label="UNIQUE"></td>` +
+    `<td><input class="c-def" type="text" spellcheck="false" aria-label="${esc(t('defaultVal'))}"></td>` +
+    `<td><button type="button" class="del c-rm" title="${esc(t('removeColumn'))}" aria-label="${esc(t('removeColumn'))}">✕</button></td>`;
 }
 
 function ntReadColumns() {

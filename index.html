@@ -22,12 +22,13 @@
   </script>
 </head>
 <body>
+  <a class="skip-link" href="#main" data-i18n="skipLink">Skip to content</a>
   <header>
-    <button id="btn-menu" data-i18n-title="menuTooltip" title="Show / hide table list">☰</button>
+    <button id="btn-menu" data-i18n-title="menuTooltip" data-i18n-label="menuTooltip" title="Show / hide table list" aria-label="Show / hide table list">☰</button>
     <h1><a href="https://github.com/rs1-es/rs1-sqlite-editor" target="_blank" rel="noopener" data-i18n-title="sourceTooltip" title="Source code on GitHub">RS1 SQLite Editor</a></h1>
     <input type="file" id="file-input" accept=".sqlite,.sqlite3,.db,.db3" hidden>
-    <button id="btn-theme" data-i18n-title="themeTooltip" title="Toggle dark / light mode">🌙</button>
-    <button id="btn-lang" data-i18n-title="langTooltip" title="Change language">ES</button>
+    <button id="btn-theme" data-i18n-title="themeTooltip" data-i18n-label="themeTooltip" title="Toggle dark / light mode" aria-label="Toggle dark / light mode">🌙</button>
+    <button id="btn-lang" data-i18n-title="langTooltip" data-i18n-label="langTooltip" title="Change language" aria-label="Change language">ES</button>
     <button id="btn-new" disabled data-i18n="newBtn" data-i18n-title="newBtn">New database</button>
     <button id="btn-open" class="primary" data-i18n="openBtn" data-i18n-title="openBtn">Open database</button>
     <button id="btn-export" disabled data-i18n="exportBtn" data-i18n-title="exportBtn">Export</button>
@@ -42,19 +43,19 @@
       <div id="schema-list"></div>
     </aside>
 
-    <main id="main">
-      <nav id="main-tabs">
-        <button id="tab-data" class="tab active" disabled data-i18n="tabData">Data</button>
-        <button id="tab-sql" class="tab" disabled data-i18n="tabSql">SQL</button>
-      </nav>
+    <main id="main" tabindex="-1">
+      <div id="main-tabs" role="tablist">
+        <button id="tab-data" class="tab active" role="tab" aria-selected="true" disabled data-i18n="tabData">Data</button>
+        <button id="tab-sql" class="tab" role="tab" aria-selected="false" tabindex="-1" disabled data-i18n="tabSql">SQL</button>
+      </div>
 
-      <div id="welcome" class="panel">
+      <div id="welcome" class="panel" role="tabpanel" aria-labelledby="tab-data">
         <p data-i18n="welcome1">Drop a <b>.sqlite / .db</b> file here or click <b>Open database</b>.</p>
         <p class="muted" data-i18n="welcome2">Changes are kept in memory; use <b>Export</b> to download the modified database.</p>
         <p class="notice" data-i18n="privacyNote">🔒 Your databases are processed entirely in your browser. No file is ever uploaded to any server.</p>
       </div>
 
-      <section id="table-view" class="panel" hidden>
+      <section id="table-view" class="panel" role="tabpanel" aria-labelledby="tab-data" hidden>
         <div class="toolbar">
           <h2 id="table-title"></h2>
           <span id="table-badge" class="badge"></span>
@@ -66,24 +67,24 @@
           <button id="btn-export-csv" class="csv-export" data-i18n="exportCsv" data-i18n-title="csvTooltip" title="Download the current listing as a CSV file">Export CSV</button>
         </div>
         <div class="toolbar filter-bar">
-          <input type="search" id="filter-input" spellcheck="false" autocomplete="off" data-i18n-placeholder="filterPlaceholder" placeholder="Search rows…">
-          <select id="filter-col"></select>
-          <span id="row-count" class="muted"></span>
+          <input type="search" id="filter-input" spellcheck="false" autocomplete="off" data-i18n-placeholder="filterPlaceholder" data-i18n-label="filterPlaceholder" placeholder="Search rows…" aria-label="Search rows…">
+          <select id="filter-col" data-i18n-label="filterColLabel" aria-label="Search in column"></select>
+          <span id="row-count" class="muted" aria-live="polite"></span>
         </div>
         <p id="readonly-note" class="muted" hidden data-i18n="readonlyNote">Read-only object: views and WITHOUT ROWID tables cannot be edited.</p>
         <div id="table-container"></div>
-        <nav id="pager" class="pager" hidden>
-          <button id="pg-first" class="pg-first" data-i18n-title="pageFirst" title="First page">«</button>
-          <button id="pg-prev" class="pg-prev" data-i18n-title="pagePrev" title="Previous page">‹</button>
+        <nav id="pager" class="pager" data-i18n-label="paginationLabel" aria-label="Pagination" hidden>
+          <button id="pg-first" class="pg-first" data-i18n-title="pageFirst" data-i18n-label="pageFirst" title="First page" aria-label="First page">«</button>
+          <button id="pg-prev" class="pg-prev" data-i18n-title="pagePrev" data-i18n-label="pagePrev" title="Previous page" aria-label="Previous page">‹</button>
           <span id="pager-info" class="pager-info"></span>
-          <button id="pg-next" class="pg-next" data-i18n-title="pageNext" title="Next page">›</button>
-          <button id="pg-last" class="pg-last" data-i18n-title="pageLast" title="Last page">»</button>
-          <select id="pg-size" class="pg-size" data-i18n-title="pageSizeLabel" title="Rows per page"></select>
+          <button id="pg-next" class="pg-next" data-i18n-title="pageNext" data-i18n-label="pageNext" title="Next page" aria-label="Next page">›</button>
+          <button id="pg-last" class="pg-last" data-i18n-title="pageLast" data-i18n-label="pageLast" title="Last page" aria-label="Last page">»</button>
+          <select id="pg-size" class="pg-size" data-i18n-title="pageSizeLabel" data-i18n-label="pageSizeLabel" title="Rows per page" aria-label="Rows per page"></select>
         </nav>
       </section>
 
-      <section id="sql-view" class="panel" hidden>
-        <textarea id="sql-input" spellcheck="false" data-i18n-placeholder="sqlPlaceholder"
+      <section id="sql-view" class="panel" role="tabpanel" aria-labelledby="tab-sql" hidden>
+        <textarea id="sql-input" spellcheck="false" data-i18n-label="sqlLabel" aria-label="SQL query" data-i18n-placeholder="sqlPlaceholder"
           placeholder="Write your SQL commands here, e.g.:&#10;SELECT * FROM table LIMIT 10;"></textarea>
         <div class="toolbar">
           <button id="btn-run" class="primary" data-i18n="runBtn">Run (Ctrl+Enter)</button>
@@ -96,13 +97,13 @@
   </div>
 
   <footer>
-    <span id="status"></span>
+    <span id="status" role="status"></span>
     <span class="footer-info" data-i18n="footerInfo">This web page was created with the help of artificial intelligence. Contact: <a href="mailto:admin@rs1.es">admin@rs1.es</a></span>
   </footer>
 
-  <dialog id="table-dialog">
+  <dialog id="table-dialog" aria-labelledby="nt-title">
     <form id="table-form" autocomplete="off">
-      <h2 data-i18n="newTableTitle">Create table</h2>
+      <h2 id="nt-title" data-i18n="newTableTitle">Create table</h2>
       <label class="field">
         <span data-i18n="tableName">Table name</span>
         <input id="nt-name" type="text" spellcheck="false">
@@ -118,7 +119,7 @@
               <th title="NOT NULL">NN</th>
               <th title="UNIQUE">UQ</th>
               <th data-i18n="defaultVal">Default</th>
-              <th></th>
+              <th><span class="sr-only" data-i18n="rowActions">Actions</span></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -126,7 +127,7 @@
       </div>
       <button type="button" id="nt-add-col" data-i18n="addColumn">+ Add column</button>
       <pre id="nt-preview"></pre>
-      <p id="nt-error" hidden></p>
+      <p id="nt-error" role="alert" hidden></p>
       <div class="dialog-actions">
         <button type="button" id="nt-cancel" data-i18n="cancelAdd">Cancel</button>
         <button type="submit" class="primary" data-i18n="createBtn">Create table</button>
@@ -134,9 +135,9 @@
     </form>
   </dialog>
 
-  <dialog id="csv-dialog">
+  <dialog id="csv-dialog" aria-labelledby="csv-title">
     <form id="csv-form" autocomplete="off">
-      <h2 data-i18n="importCsvTitle">Import CSV</h2>
+      <h2 id="csv-title" data-i18n="importCsvTitle">Import CSV</h2>
       <label class="field">
         <span data-i18n="csvTarget">Import into</span>
         <select id="csv-target"></select>
@@ -157,7 +158,7 @@
       <label class="check"><input type="checkbox" id="csv-header" checked><span data-i18n="csvHeader">First row contains column names</span></label>
       <p id="csv-info" class="muted"></p>
       <div id="csv-preview"></div>
-      <p id="csv-error" hidden></p>
+      <p id="csv-error" role="alert" hidden></p>
       <div class="dialog-actions">
         <button type="button" id="csv-cancel" data-i18n="cancelAdd">Cancel</button>
         <button type="submit" class="primary" data-i18n="importBtn">Import</button>
@@ -165,13 +166,13 @@
     </form>
   </dialog>
 
-  <dialog id="struct-dialog">
+  <dialog id="struct-dialog" aria-labelledby="struct-title">
     <h2 id="struct-title"></h2>
     <h3 data-i18n="structColumns">Columns</h3>
     <div id="struct-cols"></div>
     <div class="inline-form">
       <input id="sc-name" type="text" spellcheck="false" data-i18n-placeholder="colName" placeholder="Column">
-      <select id="sc-type"></select>
+      <select id="sc-type" data-i18n-label="colType" aria-label="Type"></select>
       <label class="check inline"><input type="checkbox" id="sc-nn">NOT NULL</label>
       <input id="sc-def" type="text" spellcheck="false" data-i18n-placeholder="defaultVal" placeholder="Default">
       <button type="button" data-act="add-col" data-i18n="addColumn">+ Add column</button>
@@ -179,7 +180,7 @@
     <h3 data-i18n="structIndexes">Indexes</h3>
     <div id="struct-idx"></div>
     <div id="struct-newidx"></div>
-    <p id="struct-error" hidden></p>
+    <p id="struct-error" role="alert" hidden></p>
     <div class="dialog-actions">
       <button type="button" id="struct-close" data-i18n="closeBtn">Close</button>
     </div>
