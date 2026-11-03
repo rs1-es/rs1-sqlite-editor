@@ -1,4 +1,4 @@
-/* ---------- Internacionalización ---------- */
+/* ---------- Internationalization ---------- */
 
 const I18N = {
   en: {
@@ -249,10 +249,10 @@ const I18N = {
   }
 };
 
-/* Idioma: preferencia guardada > idioma del navegador > inglés */
+/* Language: saved preference > browser language > English */
 function detectLang() {
   let saved = null;
-  try { saved = localStorage.getItem('rs1-lang'); } catch (e) { /* almacenamiento no disponible */ }
+  try { saved = localStorage.getItem('rs1-lang'); } catch (e) { /* storage not available */ }
   if (saved && I18N[saved]) return saved;
   const prefs = navigator.languages && navigator.languages.length
     ? navigator.languages : [navigator.language || 'en'];

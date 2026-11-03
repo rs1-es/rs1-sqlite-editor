@@ -7,7 +7,7 @@ import { state } from './state.js';
 import { setStatus } from './status.js';
 import { $, esc, qi } from './util.js';
 
-/* ---------- Importar CSV ---------- */
+/* ---------- CSV import ---------- */
 
 let csvText = '';
 let csvBase = '';
@@ -95,7 +95,7 @@ $('csv-form').addEventListener('submit', e => {
     if (!cols.length) { csvError(t('csvNoMatch')); return; }
   }
 
-  // Sin base abierta: se crea una nueva, pero solo se activa si la importación sale bien
+  // No database open: a new one is created, but only activated if the import succeeds
   let pending = null, baseSig = null;
   if (!state.db) {
     try { pending = makeEmptyDb(); } catch (err) { csvError(t('newDbFail', err.message)); return; }
@@ -114,8 +114,8 @@ $('csv-form').addEventListener('submit', e => {
     st = null;
     d.run('COMMIT');
   } catch (err) {
-    if (st) { try { st.free(); } catch (_) { /* ya liberado */ } }
-    try { d.run('ROLLBACK'); } catch (_) { /* sin transacción activa */ }
+    if (st) { try { st.free(); } catch (_) { /* already freed */ } }
+    try { d.run('ROLLBACK'); } catch (_) { /* no active transaction */ }
     if (pending) pending.close();
     csvError(t('importFail', err.message));
     return;
@@ -123,7 +123,7 @@ $('csv-form').addEventListener('submit', e => {
   $('csv-dialog').close();
   if (pending) {
     useDatabase(pending, (csvBase.replace(/[\\/:*?"<>|]/g, '_') || 'database') + '.sqlite');
-    state.savedSignature = baseSig; // los datos importados aún no se han exportado
+    state.savedSignature = baseSig; // the imported data has not been exported yet
   }
   refreshSchema();
   showObject(table, 'table');

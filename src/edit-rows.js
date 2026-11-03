@@ -4,7 +4,7 @@ import { state } from './state.js';
 import { setStatus } from './status.js';
 import { $, qi } from './util.js';
 
-/* Edición de celdas (doble clic) */
+/* Cell editing (double click) */
 
 const tableContainer = $('table-container');
 
@@ -60,7 +60,7 @@ function commitCell(td, newVal) {
   }
 }
 
-/* Añadir y eliminar registros */
+/* Adding and deleting records */
 
 $('btn-add-row').addEventListener('click', () => {
   if (!state.current || state.current.type !== 'table' || !state.hasRowid) return;
@@ -71,7 +71,7 @@ $('btn-add-row').addEventListener('click', () => {
   }
   state.addRowActive = true;
   state.addDraft = [];
-  state.page = Infinity; // la fila nueva se muestra al final del listado, en la última página
+  state.page = Infinity; // the new row is shown at the end of the listing, on the last page
   renderRows();
   const row = tableContainer.querySelector('tr.add-row');
   if (row) {
@@ -108,7 +108,7 @@ function commitAddRow() {
     if (!state.sortCol) tableContainer.scrollTop = tableContainer.scrollHeight;
     setStatus(() => t('rowAdded'));
   } catch (e) {
-    // la fila de borrador se mantiene con los valores para poder corregirlos
+    // the draft row is kept with its values so they can be corrected
     setStatus(() => t('addFail', e.message), true);
   }
 }

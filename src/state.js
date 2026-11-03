@@ -1,21 +1,21 @@
 import { loadPageSize } from './util.js';
 
-/* Estado compartido de la aplicación */
+/* Shared application state */
 export const state = {
   SQL: null,
   db: null,
   fileName: 'export.sqlite',
-  savedSignature: null,   // firma de la BD en el último guardado/apertura (cambios sin guardar)
+  savedSignature: null,   // DB signature at the last save/open (unsaved changes)
   objects: [],            // [{name, type}]
   current: null,          // {name, type}
-  columns: [],            // columnas del objeto actual
+  columns: [],            // columns of the current object
   hasRowid: false,
-  filterText: '',         // texto de búsqueda de la vista de datos
-  filterCol: '',          // '' = todas las columnas
-  page: 0,                // página actual (base 0) de la vista de datos
+  filterText: '',         // search text of the data view
+  filterCol: '',          // '' = all columns
+  page: 0,                // current page (0-based) of the data view
   pageSize: loadPageSize(),
-  sortCol: null,          // columna por la que se ordena la vista de datos
+  sortCol: null,          // column the data view is sorted by
   sortDir: 'ASC',
-  addRowActive: false,    // fila "nuevo registro" en curso (aún sin insertar)
-  addDraft: []            // valores escritos en la fila nueva
+  addRowActive: false,    // "new record" row in progress (not inserted yet)
+  addDraft: []            // values typed in the new row
 };

@@ -5,7 +5,7 @@ import { state } from './state.js';
 import { setStatus } from './status.js';
 import { $, qi } from './util.js';
 
-/* ---------- Renombrar y eliminar tablas / vistas ---------- */
+/* ---------- Rename and drop tables / views ---------- */
 
 $('btn-rename').addEventListener('click', () => {
   if (!state.current || state.current.type !== 'table') return;

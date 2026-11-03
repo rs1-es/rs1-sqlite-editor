@@ -5,7 +5,7 @@ import { state } from './state.js';
 import { setStatus } from './status.js';
 import { $, displayDefault, esc, qi } from './util.js';
 
-/* ---------- Estructura: columnas e índices ---------- */
+/* ---------- Structure: columns and indexes ---------- */
 
 function structError(msg) {
   const el = $('struct-error');
@@ -57,7 +57,7 @@ function renderStructure() {
     `<button type="button" data-act="add-idx">${esc(t('createIndexBtn'))}</button></div>`;
 }
 
-/* Ejecuta una sentencia de estructura; refresca la vista si va bien */
+/* Runs a structure statement; refreshes the view if it succeeds */
 function structRun(sql) {
   try {
     state.db.run(sql);

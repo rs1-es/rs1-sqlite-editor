@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { state } from './state.js';
 import { $, esc } from './util.js';
 
-/* ---------- Esquema (tablas y vistas) ---------- */
+/* ---------- Schema (tables and views) ---------- */
 
 export function refreshSchema() {
   const res = state.db.exec(

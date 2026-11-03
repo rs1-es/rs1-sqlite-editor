@@ -5,7 +5,7 @@ import { state } from './state.js';
 import { setStatus } from './status.js';
 import { $ } from './util.js';
 
-/* ---------- Exportación CSV ---------- */
+/* ---------- CSV export ---------- */
 
 export function downloadCsv(name, columns, rows) {
   const blob = new Blob(['\uFEFF' + toCsv(columns, rows)], { type: 'text/csv;charset=utf-8' });
@@ -17,7 +17,7 @@ export function downloadCsv(name, columns, rows) {
   setStatus(() => t('csvExported', a.download));
 }
 
-/* Listado de la tabla o vista actual (todas las filas) */
+/* Listing of the current table or view (all rows) */
 $('btn-export-csv').addEventListener('click', () => {
   if (!state.current) return;
   try {

@@ -1,4 +1,4 @@
-// los módulos que solo registran manejadores de eventos se importan por sus efectos
+// modules that only register event handlers are imported for their side effects
 import './csv-export.js';
 import './csv-import.js';
 import './edit-rows.js';
@@ -19,7 +19,7 @@ import { $ } from './util.js';
 function applyI18n() {
   document.documentElement.lang = lang;
   document.body.dataset.dragText = t('dragHint');
-  // data-i18n-args: argumentos (JSON) de textos que se generan al ejecutar, como los resultados SQL
+  // data-i18n-args: arguments (JSON) of texts generated at run time, such as SQL results
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.innerHTML = t(el.dataset.i18n, ...JSON.parse(el.dataset.i18nArgs || '[]'));
   });

@@ -7,9 +7,9 @@ import { state } from './state.js';
 import { setStatus } from './status.js';
 import { $, BLOB_TEXT, PAGE_SIZES, esc } from './util.js';
 
-/* ---------- Consola SQL ---------- */
+/* ---------- SQL console ---------- */
 
-/* Tras ejecutar SQL: refresca esquema y la tabla/vista abierta (puede haber cambiado) */
+/* After running SQL: refreshes the schema and the open table/view (it may have changed) */
 function refreshAfterSql() {
   refreshSchema();
   if (state.current) {
@@ -73,13 +73,13 @@ function runSQL() {
     p.className = 'msg error';
     p.textContent = e.message;
     out.appendChild(p);
-    refreshAfterSql(); // sentencias anteriores al error pueden haberse aplicado
+    refreshAfterSql(); // statements before the error may have been applied
     setStatus(() => t('sqlError'), true);
   }
 }
 
-/* Tabla de resultados SQL con orden por columna y paginación en el cliente
-   (db.exec ya devuelve todas las filas). Devuelve un contenedor con tabla y paginador. */
+/* SQL results table with column sorting and client-side pagination
+   (db.exec already returns all rows). Returns a container with the table and the pager. */
 function buildResultTable(cols, rows) {
   const wrap = document.createElement('div');
   const table = document.createElement('table');

@@ -5,7 +5,7 @@ import { state } from './state.js';
 import { setStatus } from './status.js';
 import { $, esc, qi } from './util.js';
 
-/* ---------- Creador visual de tablas ---------- */
+/* ---------- Visual table creator ---------- */
 
 export const COL_TYPES = ['INTEGER', 'TEXT', 'REAL', 'NUMERIC', 'BLOB'];
 const ntBody = $('nt-cols').tBodies[0];
@@ -37,7 +37,7 @@ function ntReadColumns() {
   }));
 }
 
-/* AUTOINCREMENT solo es válido en una única columna INTEGER PRIMARY KEY */
+/* AUTOINCREMENT is only valid on a single INTEGER PRIMARY KEY column */
 function ntSync() {
   const rows = [...ntBody.rows];
   const pkCount = rows.filter(tr => tr.querySelector('.c-pk').checked).length;

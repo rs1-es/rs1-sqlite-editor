@@ -5,9 +5,9 @@ import { state } from './state.js';
 import { switchTab } from './tabs.js';
 import { $, BLOB_TEXT, PAGE_SIZES, displayDefault, esc, qi } from './util.js';
 
-/* ---------- Vista de datos ---------- */
+/* ---------- Data view ---------- */
 
-/* Lee columnas y detecta rowid del objeto actual; actualiza botones de la barra */
+/* Reads the columns and detects rowid of the current object; updates the toolbar buttons */
 export function loadObjectMeta() {
   try {
     const info = state.db.exec(`PRAGMA table_info(${qi(state.current.name)})`);
@@ -30,7 +30,7 @@ export function loadObjectMeta() {
   $('readonly-note').hidden = !(state.current.type === 'view' || !state.hasRowid);
 }
 
-/* Rellena el selector de columna del buscador (conserva la selección si sigue existiendo) */
+/* Fills the search column selector (keeps the selection if it still exists) */
 export function fillFilterCols() {
   const names = (state.hasRowid ? ['rowid'] : []).concat(state.columns.map(c => c.name));
   if (state.filterCol && !names.includes(state.filterCol)) state.filterCol = '';
@@ -65,7 +65,7 @@ export function showObject(name, type) {
   renderRows();
 }
 
-/* SELECT del listado actual (búsqueda + orden). includeRowid: añade rowid como primera columna */
+/* SELECT for the current listing (search + order). includeRowid: adds rowid as the first column */
 export function buildListQuery(includeRowid) {
   const params = [];
   let where = '';
@@ -164,7 +164,7 @@ export function renderRows() {
   }
 }
 
-/* Paginación */
+/* Pagination */
 
 function renderPager(matches, shown, pages) {
   if (matches) {
@@ -177,7 +177,7 @@ function renderPager(matches, shown, pages) {
   } else {
     $('row-count').textContent = '';
   }
-  // con una sola página y el tamaño mínimo no hay nada que paginar
+  // with a single page at the smallest size there is nothing to paginate
   $('pager').hidden = matches <= PAGE_SIZES[0];
   $('pager-info').textContent = `${state.page + 1} / ${pages}`;
   $('pg-first').disabled = $('pg-prev').disabled = state.page === 0;
@@ -203,7 +203,7 @@ $('pg-size').addEventListener('change', e => {
   if (state.current) renderRows();
 });
 
-/* Búsqueda / filtrado */
+/* Search / filtering */
 
 let filterTimer = null;
 $('filter-input').addEventListener('input', e => {

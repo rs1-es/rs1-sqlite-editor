@@ -5,6 +5,6 @@ export const sizeOptions = () => PAGE_SIZES.map(n => `<option value="${n}">${n}<
 
 export function setPageSize(n) {
   state.pageSize = n;
-  try { localStorage.setItem('rs1-page-size', n); } catch (err) { /* sin almacenamiento */ }
+  try { localStorage.setItem('rs1-page-size', n); } catch (err) { /* no storage */ }
   $('pg-size').value = n;
 }

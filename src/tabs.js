@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { $ } from './util.js';
 
-/* ---------- Pestañas ---------- */
+/* ---------- Tabs ---------- */
 
 export function switchTab(tab) {
   const isData = tab === 'data';

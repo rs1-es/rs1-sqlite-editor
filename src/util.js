@@ -13,7 +13,7 @@ export const qi = n => '"' + String(n).replace(/"/g, '""') + '"';
 export const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
   .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/* Valor por defecto (según PRAGMA table_info) para mostrar como pista */
+/* Default value (from PRAGMA table_info) to show as a hint */
 export function displayDefault(d) {
   if (d === null || d === undefined) return '';
   const s = String(d);

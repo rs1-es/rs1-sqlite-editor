@@ -6,9 +6,9 @@ import { setStatus } from './status.js';
 import { switchTab } from './tabs.js';
 import { $ } from './util.js';
 
-const SQLJS_PATH = 'lib/'; // carpeta con sql-wasm.js y sql-wasm.wasm (alojados en este servidor)
+const SQLJS_PATH = 'lib/'; // folder with sql-wasm.js and sql-wasm.wasm (hosted on this server)
 
-/* ---------- Inicialización ---------- */
+/* ---------- Initialization ---------- */
 
 export async function init() {
   try {
@@ -21,7 +21,7 @@ export async function init() {
   }
 }
 
-/* Pone una base de datos (abierta o nueva) como la activa y reinicia la interfaz */
+/* Makes a database (opened or new) the active one and resets the interface */
 export function useDatabase(newDb, name) {
   if (state.db) state.db.close();
   state.db = newDb;
@@ -51,7 +51,7 @@ function openFile(file) {
     try {
       const data = new Uint8Array(buf);
       const newDb = new state.SQL.Database(data);
-      // comprueba que es una base válida antes de reemplazar la actual
+      // checks that it is a valid database before replacing the current one
       newDb.exec('SELECT 1 FROM sqlite_master LIMIT 1');
       useDatabase(newDb, file.name || 'base.sqlite');
       setStatus(() => t('loaded', state.fileName, state.objects.length));
@@ -61,12 +61,12 @@ function openFile(file) {
   });
 }
 
-/* ---------- Nueva base de datos ---------- */
+/* ---------- New database ---------- */
 
 export function makeEmptyDb() {
   const newDb = new state.SQL.Database();
-  // Crear y borrar una tabla temporal fuerza que el archivo tenga cabecera SQLite
-  // válida aunque el usuario lo exporte sin haber creado nada.
+  // Creating and dropping a temporary table forces the file to have a valid
+  // SQLite header even if the user exports it without having created anything.
   newDb.run('CREATE TABLE _tmp(x); DROP TABLE _tmp;');
   return newDb;
 }
@@ -88,7 +88,7 @@ function newDatabase() {
 
 $('btn-new').addEventListener('click', newDatabase);
 
-/* ---------- Abrir y exportar ---------- */
+/* ---------- Open and export ---------- */
 
 $('btn-open').addEventListener('click', () => $('file-input').click());
 $('file-input').addEventListener('change', e => {
@@ -108,7 +108,7 @@ document.addEventListener('drop', e => {
 $('btn-export').addEventListener('click', () => {
   try {
     const data = state.db.export();
-    state.savedSignature = dbSignature(); // lo exportado cuenta como guardado
+    state.savedSignature = dbSignature(); // what was exported counts as saved
     const blob = new Blob([data], { type: 'application/x-sqlite3' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -121,10 +121,10 @@ $('btn-export').addEventListener('click', () => {
   }
 });
 
-/* ---------- Aviso de cambios sin guardar ---------- */
+/* ---------- Unsaved changes warning ---------- */
 
-/* Firma barata del estado de la BD: filas modificadas por INSERT/UPDATE/DELETE,
-   versión del esquema (DDL) y user_version. Evita exportar la BD entera para comparar. */
+/* Cheap signature of the DB state: rows modified by INSERT/UPDATE/DELETE,
+   schema version (DDL) and user_version. Avoids exporting the whole DB to compare. */
 export function dbSignature(d = state.db) {
   try {
     const r = d.exec(
@@ -132,7 +132,7 @@ export function dbSignature(d = state.db) {
       '(SELECT user_version FROM pragma_user_version)');
     return r[0].values[0].join('|');
   } catch (e) {
-    return null; // desconocido: se tratará como "con cambios"
+    return null; // unknown: it will be treated as "with changes"
   }
 }
 

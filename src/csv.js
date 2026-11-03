@@ -15,7 +15,7 @@ export function detectDelim(text) {
   return best[1] > 1 ? best[0] : ',';
 }
 
-/* Analizador CSV (RFC 4180): comillas dobles, saltos de línea dentro de campos */
+/* CSV parser (RFC 4180): double quotes, line breaks inside fields */
 export function parseCsv(text, d) {
   if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
   const rows = [];
@@ -36,7 +36,7 @@ export function parseCsv(text, d) {
   return rows.filter(r => !(r.length === 1 && r[0] === ''));
 }
 
-/* INTEGER / REAL solo si todos los valores lo son (sin ceros a la izquierda); si no, TEXT */
+/* INTEGER / REAL only if all values are (no leading zeros); otherwise TEXT */
 export function csvInferType(values) {
   let ty = 'INTEGER', any = false;
   for (const v of values) {
