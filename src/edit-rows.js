@@ -2,6 +2,7 @@ import { renderRows } from './data-view.js';
 import { t } from './i18n.js';
 import { state } from './state.js';
 import { setStatus } from './status.js';
+import { trackRowChange } from './undo.js';
 import { $, qi } from './util.js';
 
 /* Cell editing (double click) */
@@ -116,9 +117,9 @@ function commitCell(td, newVal) {
   const colDef = state.columns.find(c => c.name === col);
   const emptyValue = colDef && colDef.notnull ? '' : null;
   try {
-    state.db.run(
+    trackRowChange(state.current.name, Number(rowid), 'update', () => state.db.run(
       `UPDATE ${qi(state.current.name)} SET ${qi(col)} = ? WHERE rowid = ?`,
-      [newVal === '' ? emptyValue : newVal, Number(rowid)]);
+      [newVal === '' ? emptyValue : newVal, Number(rowid)]));
     setStatus(() => t('cellUpdated'));
     renderRows();
   } catch (e) {
@@ -161,13 +162,15 @@ function commitAddRow() {
     }
   }
   try {
-    if (cols.length) {
-      state.db.run(
-        `INSERT INTO ${qi(state.current.name)} (${cols.join(', ')}) ` +
-        `VALUES (${cols.map(() => '?').join(', ')})`, vals);
-    } else {
-      state.db.run(`INSERT INTO ${qi(state.current.name)} DEFAULT VALUES`);
-    }
+    trackRowChange(state.current.name, null, 'insert', () => {
+      if (cols.length) {
+        state.db.run(
+          `INSERT INTO ${qi(state.current.name)} (${cols.join(', ')}) ` +
+          `VALUES (${cols.map(() => '?').join(', ')})`, vals);
+      } else {
+        state.db.run(`INSERT INTO ${qi(state.current.name)} DEFAULT VALUES`);
+      }
+    });
     state.addRowActive = false;
     state.addDraft = [];
     if (!state.sortCol && !state.filterText) state.page = Infinity;
@@ -227,7 +230,9 @@ tableContainer.addEventListener('click', e => {
   if (!btn) return;
   if (!confirm(t('confirmDelete'))) return;
   try {
-    state.db.run(`DELETE FROM ${qi(state.current.name)} WHERE rowid = ?`, [Number(btn.dataset.rowid)]);
+    const rowid = Number(btn.dataset.rowid);
+    trackRowChange(state.current.name, rowid, 'delete', () =>
+      state.db.run(`DELETE FROM ${qi(state.current.name)} WHERE rowid = ?`, [rowid]));
     renderRows();
     setStatus(() => t('rowDeleted'));
   } catch (err) {

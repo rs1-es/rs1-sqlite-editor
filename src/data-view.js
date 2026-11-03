@@ -3,6 +3,7 @@ import { setPageSize, sizeOptions } from './paging.js';
 import { renderSchema } from './schema.js';
 import { state } from './state.js';
 import { switchTab } from './tabs.js';
+import { updateUndoButtons } from './undo.js';
 import { $, BLOB_TEXT, PAGE_SIZES, displayDefault, esc, qi, rescuePagerFocus } from './util.js';
 
 /* ---------- Data view ---------- */
@@ -24,6 +25,7 @@ export function loadObjectMeta() {
   }
   if (state.sortCol && state.sortCol !== 'rowid' && !state.columns.some(c => c.name === state.sortCol)) state.sortCol = null;
   $('btn-add-row').hidden = state.current.type === 'view' || !state.hasRowid;
+  updateUndoButtons();
   fillFilterCols();
   $('btn-structure').hidden = state.current.type === 'view';
   $('btn-rename').hidden = state.current.type === 'view';
