@@ -670,8 +670,8 @@ body.dragging::after {
   /* open / new / export as icon only (the text stays for screen readers) */
   #btn-new, #btn-open, #btn-export {
     font-size: 0;
-    min-width: 38px;
-    padding: 6px 8px;
+    min-width: 36px;
+    padding: 6px 7px;
   }
 
   #app { flex-direction: column; }
@@ -700,10 +700,11 @@ body.dragging::after {
   .toolbar button { padding: 8px 10px; }
 
   /* table toolbar: icon-only buttons (the text stays in the DOM for screen readers) */
-  #table-view .toolbar { margin: 4px 0; }
+  #table-view .toolbar { margin: 4px 0; gap: 4px; }
 
+  /* the name takes the whole first row (with the badge); the buttons wrap onto the next one */
   #table-view .toolbar h2 {
-    flex: 1 1 0;
+    flex: 1 1 calc(100% - 80px);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -714,8 +715,8 @@ body.dragging::after {
 
   #btn-structure, #btn-rename, #btn-drop, #btn-add-row, #btn-undo, #btn-redo, button.csv-export {
     font-size: 0;
-    min-width: 38px;
-    padding: 6px 8px;
+    min-width: 36px;
+    padding: 6px 7px;
   }
 
   /* search: field + column on one line, counter below in small text */
