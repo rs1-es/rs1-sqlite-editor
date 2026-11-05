@@ -29,6 +29,7 @@
     <input type="file" id="file-input" accept=".sqlite,.sqlite3,.db,.db3" hidden>
     <button id="btn-theme" data-i18n-title="themeTooltip" data-i18n-label="themeTooltip" title="Toggle dark / light mode" aria-label="Toggle dark / light mode">🌙</button>
     <button id="btn-lang" data-i18n-title="langTooltip" data-i18n-label="langTooltip" title="Change language" aria-label="Change language">ES</button>
+    <button id="btn-help" data-i18n-title="helpTooltip" data-i18n-label="helpTooltip" title="How to use this page" aria-label="How to use this page">?</button>
     <button id="btn-new" disabled data-i18n="newBtn" data-i18n-title="newBtn">New database</button>
     <button id="btn-open" class="primary" data-i18n="openBtn" data-i18n-title="openBtn">Open database</button>
     <button id="btn-export" disabled data-i18n="exportBtn" data-i18n-title="exportBtn">Export</button>
@@ -52,6 +53,7 @@
       <div id="welcome" class="panel" role="tabpanel" aria-labelledby="tab-data">
         <p data-i18n="welcome1">Drop a <b>.sqlite / .db</b> file here or click <b>Open database</b>.</p>
         <p class="muted" data-i18n="welcome2">Changes are kept in memory; use <b>Export</b> to download the modified database.</p>
+        <p><button id="btn-help-link" data-i18n="helpLink">How to use this page</button></p>
         <p class="notice" data-i18n="privacyNote">🔒 Your databases are processed entirely in your browser. No file is ever uploaded to any server.</p>
       </div>
 
@@ -102,6 +104,14 @@
     <span id="status" role="status"></span>
     <span class="footer-info" data-i18n="footerInfo">This web page was created with the help of artificial intelligence. Contact: <a href="mailto:admin@rs1.es">admin@rs1.es</a></span>
   </footer>
+
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <div class="help-head">
+      <h2 id="help-title">How to use this page</h2>
+      <button id="help-close" data-i18n-title="closeBtn" data-i18n-label="closeBtn" title="Close" aria-label="Close">✕</button>
+    </div>
+    <div id="help-body"></div>
+  </dialog>
 
   <dialog id="table-dialog" aria-labelledby="nt-title">
     <form id="table-form" autocomplete="off">

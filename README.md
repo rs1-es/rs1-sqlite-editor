@@ -16,6 +16,8 @@ Live version: <https://sqlite.rs1.es>
 - Create tables with a dialog, rename them, drop them and change their structure.
 - SQL tab to run statements (Ctrl+Enter), with sortable, paginated results.
 - Import CSV, and export the current listing or an SQL result to CSV.
+- Undo and redo for row edits, additions and deletions (Ctrl+Z / Ctrl+Y).
+- Built-in help dialog (the `?` button) explaining how to use the page.
 - Spanish and English interface, light and dark themes, and a layout adapted to small screens.
 
 ## Project structure
@@ -67,7 +69,8 @@ starts the local server described above.
 | `database.js` | Open, create and export databases, drag and drop, unsaved-changes warning |
 | `schema.js` / `tabs.js` | Table and view list in the sidebar, Data/SQL tabs |
 | `data-view.js` / `paging.js` | Table browser: rows, sorting, search, pagination |
-| `edit-rows.js` | Cell editing and adding/deleting rows |
+| `edit-rows.js` / `undo.js` | Cell editing, adding/deleting rows, and undo/redo of those changes |
+| `help.js` | "How to use this page" dialog (content in English and Spanish) |
 | `sql-console.js` | SQL tab and its paginated results |
 | `csv.js` | Pure CSV functions (parse, serialize, type inference) |
 | `csv-export.js` / `csv-import.js` | CSV export and the import dialog |

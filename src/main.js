@@ -2,6 +2,7 @@
 import './csv-export.js';
 import './csv-import.js';
 import './edit-rows.js';
+import './help.js';
 import './new-table.js';
 import './sql-console.js';
 import './structure.js';
@@ -11,6 +12,7 @@ import './theme.js';
 import { fillFilterCols, renderBadge, renderRows } from './data-view.js';
 import { init } from './database.js';
 import { lang, t, toggleLang } from './i18n.js';
+import { renderHelp } from './help.js';
 import { renderSchema } from './schema.js';
 import { state } from './state.js';
 import { renderStatus } from './status.js';
@@ -31,6 +33,7 @@ function applyI18n() {
   // the accessible name must contain the visible text (WCAG 2.5.3)
   $('btn-lang').setAttribute('aria-label', `${$('btn-lang').textContent} – ${t('langTooltip')}`);
   renderStatus();
+  renderHelp();
   if (state.db) {
     renderSchema();
     if (state.current) { fillFilterCols(); renderBadge(); renderRows(); }
