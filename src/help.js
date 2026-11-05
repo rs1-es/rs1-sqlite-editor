@@ -42,7 +42,9 @@ const HELP = {
     { title: 'Keyboard', items: [
       'In a table: arrow keys move between cells; `Home` / `End` go to the start / end of the row, `Ctrl+Home` / `Ctrl+End` to the first / last cell.',
       '`PageUp` / `PageDown` go to the first / last row of the page.',
-      'In the Data / SQL tabs and the dialogs: `Tab` moves forward, `Esc` closes a dialog.'] }
+      'In the Data / SQL tabs and the dialogs: `Tab` moves forward, `Esc` closes a dialog.',
+      '`Ctrl+O` opens a database, `Ctrl+S` exports it and `Ctrl+Shift+E` exports the current listing as CSV.',
+      '`Alt+N` creates a new table, `Alt+I` imports a CSV, `Alt+R` adds a row, and `Alt+1` / `Alt+2` switch to the Data / SQL tab.'] }
   ],
   es: [
     { title: 'Primeros pasos', items: [
@@ -82,7 +84,9 @@ const HELP = {
     { title: 'Teclado', items: [
       'En una tabla: las flechas mueven entre celdas; `Inicio` / `Fin` van al principio / final de la fila, `Ctrl+Inicio` / `Ctrl+Fin` a la primera / última celda.',
       '`Re Pág` / `Av Pág` van a la primera / última fila de la página.',
-      'En las pestañas Datos / SQL y en los diálogos: `Tab` avanza y `Esc` cierra un diálogo.'] }
+      'En las pestañas Datos / SQL y en los diálogos: `Tab` avanza y `Esc` cierra un diálogo.',
+      '`Ctrl+O` abre una base de datos, `Ctrl+S` la exporta y `Ctrl+Shift+E` exporta el listado actual como CSV.',
+      '`Alt+N` crea una tabla nueva, `Alt+I` importa un CSV, `Alt+R` añade un registro y `Alt+1` / `Alt+2` cambian a la pestaña Datos / SQL.'] }
   ]
 };
 

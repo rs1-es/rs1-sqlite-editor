@@ -4,6 +4,7 @@ import './csv-import.js';
 import './edit-rows.js';
 import './help.js';
 import './new-table.js';
+import './shortcuts.js';
 import './sql-console.js';
 import './structure.js';
 import './table-actions.js';

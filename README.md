@@ -17,6 +17,7 @@ Live version: <https://sqlite.rs1.es>
 - SQL tab to run statements (Ctrl+Enter), with sortable, paginated results.
 - Import CSV, and export the current listing or an SQL result to CSV.
 - Undo and redo for row edits, additions and deletions (Ctrl+Z / Ctrl+Y).
+- Keyboard shortcuts: Ctrl+O open, Ctrl+S export, Ctrl+Shift+E export CSV, Alt+N new table, Alt+I import CSV, Alt+R add row, Alt+1 / Alt+2 switch tab.
 - Built-in help dialog (the `?` button) explaining how to use the page.
 - Spanish and English interface, light and dark themes, and a layout adapted to small screens.
 
