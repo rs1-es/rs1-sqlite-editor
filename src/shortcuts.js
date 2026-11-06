@@ -26,5 +26,7 @@ document.addEventListener('keydown', e => {
   }
   if (!id) return;
   e.preventDefault();   // also stops the browser's own "open file" / "save page"
+  // leaving a cell being edited commits it first, as a real click on the button would
+  if (document.activeElement && document.activeElement.isContentEditable) document.activeElement.blur();
   click(id);
 });
