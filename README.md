@@ -21,6 +21,16 @@ Live version: <https://sqlite.rs1.es>
 - Built-in help dialog (the `?` button) explaining how to use the page.
 - Spanish and English interface, light and dark themes, and a layout adapted to small screens.
 
+## Screenshots
+
+The screenshots use a small sample database (`bookshop.db`).
+
+![Data view: browsing and editing a table](docs/screenshots/data-view.png)
+
+![SQL tab with sortable, paginated results (dark theme)](docs/screenshots/sql-tab.png)
+
+<img src="docs/screenshots/mobile.png" alt="Layout on a small screen, with icon-only toolbar buttons" width="300">
+
 ## Project structure
 
 | File | Description |
