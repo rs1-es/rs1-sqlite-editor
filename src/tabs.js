@@ -1,9 +1,11 @@
 import { state } from './state.js';
+import { clearStatus } from './status.js';
 import { $ } from './util.js';
 
 /* ---------- Tabs ---------- */
 
 export function switchTab(tab, focusInput = true) {
+  clearStatus(); // a message belongs to the context it was produced in
   const isData = tab === 'data';
   for (const [id, on] of [['tab-data', isData], ['tab-sql', !isData]]) {
     $(id).classList.toggle('active', on);

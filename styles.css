@@ -663,7 +663,9 @@ footer {
   min-height: 29px;
 }
 
-#status { min-height: 18px; }
+/* the message (live region) and, when it is empty, the resting line */
+.status-slot { min-height: 18px; min-width: 0; }
+#status:not(:empty) + #status-idle { display: none; }
 
 #status.error { color: var(--danger); }
 

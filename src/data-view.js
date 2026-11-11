@@ -2,6 +2,7 @@ import { t } from './i18n.js';
 import { setPageSize, sizeOptions } from './paging.js';
 import { renderSchema } from './schema.js';
 import { state } from './state.js';
+import { clearStatus } from './status.js';
 import { switchTab } from './tabs.js';
 import { updateUndoButtons } from './undo.js';
 import { $, BLOB_TEXT, PAGE_SIZES, displayDefault, esc, qi, rescuePagerFocus } from './util.js';
@@ -46,6 +47,7 @@ export function renderBadge() {
 }
 
 export function showObject(name, type) {
+  clearStatus();
   state.current = { name, type };
   state.filterText = '';
   state.filterCol = '';

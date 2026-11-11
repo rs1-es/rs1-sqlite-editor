@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { refreshSchema } from './schema.js';
 import { saveBlob } from './save.js';
 import { state } from './state.js';
-import { onStatusChange, setStatus } from './status.js';
+import { onStatusChange, setIdleProvider, setStatus } from './status.js';
 import { switchTab } from './tabs.js';
 import { keepHistoryAcross } from './undo.js';
 import { $ } from './util.js';
@@ -172,6 +172,13 @@ export function updateUnsavedIndicator() {
 }
 
 onStatusChange(updateUnsavedIndicator);
+
+// resting line of the status bar: summary of the open database
+setIdleProvider(() => {
+  if (!state.db) return t('ready');
+  const n = state.objects.length;
+  return t(n === 1 ? 'idleDbOne' : 'idleDb', state.fileName, n) + (hasUnsavedChanges() ? t('idleUnsaved') : '');
+});
 
 function hasUnsavedChanges() {
   if (!state.db || state.savedSignature === null) return false;

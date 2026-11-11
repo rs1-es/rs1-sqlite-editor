@@ -4,6 +4,9 @@ const I18N = {
   en: {
     ready: 'Ready. Open a .sqlite or .db file, or create a new database',
     wasmFail: 'Could not load sql.js (check that lib/sql-wasm.js and lib/sql-wasm.wasm exist on the server): {0}',
+    idleDb: '{0} · {1} objects',
+    idleDbOne: '{0} · 1 object',
+    idleUnsaved: ' · unsaved changes',
     loaded: '{0} loaded ({1} objects)',
     loadedOne: '{0} loaded (1 object)',
     openFail: 'Could not open the file: {0}',
@@ -150,6 +153,9 @@ const I18N = {
   es: {
     ready: 'Listo. Abre un archivo .sqlite o .db, o crea una base de datos nueva',
     wasmFail: 'No se pudo cargar sql.js (comprueba que lib/sql-wasm.js y lib/sql-wasm.wasm existen en el servidor): {0}',
+    idleDb: '{0} · {1} objetos',
+    idleDbOne: '{0} · 1 objeto',
+    idleUnsaved: ' · cambios sin exportar',
     loaded: '{0} cargada ({1} objetos)',
     loadedOne: '{0} cargada (1 objeto)',
     openFail: 'No se pudo abrir el archivo: {0}',
