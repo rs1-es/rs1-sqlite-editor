@@ -33,6 +33,15 @@ function checkValid() {
   }
 }
 
+/* Runs fn (db.export(), which resets the change counter) without invalidating the history */
+export function keepHistoryAcross(fn) {
+  checkValid();
+  const result = fn();
+  trackedSig = dbSignature();
+  updateUndoButtons();
+  return result;
+}
+
 const tableCols = table =>
   state.db.exec(`PRAGMA table_info(${qi(table)})`)[0].values.map(r => r[1]);
 

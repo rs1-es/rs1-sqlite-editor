@@ -1,9 +1,11 @@
 import { importCsvFile } from './csv-import.js';
 import { t } from './i18n.js';
 import { refreshSchema } from './schema.js';
+import { saveBlob } from './save.js';
 import { state } from './state.js';
 import { setStatus } from './status.js';
 import { switchTab } from './tabs.js';
+import { keepHistoryAcross } from './undo.js';
 import { $ } from './util.js';
 
 const SQLJS_PATH = 'lib/'; // folder with sql-wasm.js and sql-wasm.wasm (hosted on this server)
@@ -110,17 +112,24 @@ document.addEventListener('drop', e => {
   if (file) { if (/\.(csv|tsv|txt)$/i.test(file.name)) importCsvFile(file); else openFile(file); }
 });
 
-$('btn-export').addEventListener('click', () => {
+$('btn-export').addEventListener('click', async () => {
   try {
-    const data = state.db.export();
-    state.savedSignature = dbSignature(); // what was exported counts as saved
+    const wasDirty = hasUnsavedChanges();
+    // db.export() reopens the database, which resets SQLite's change counter: tell the undo
+    // history, and keep in mind that the signature is no longer comparable with the old one
+    const data = keepHistoryAcross(() => state.db.export());
+    const sig = dbSignature();
     const blob = new Blob([data], { type: 'application/x-sqlite3' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = state.fileName;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    setStatus(() => t('exported', state.fileName));
+    const r = await saveBlob(blob, state.fileName, 'application/x-sqlite3', ['.sqlite', '.sqlite3', '.db', '.db3']);
+    if (r.status === 'cancelled') {
+      // nothing was saved: if there were changes, they must keep counting as unsaved even
+      // though the change counter was reset by the export
+      if (wasDirty) state.savedSignature = UNSAVED;
+      setStatus(() => t('saveCancelled'));
+      return;
+    }
+    state.savedSignature = sig; // what was exported counts as saved
+    setStatus(() => t(r.status === 'saved' ? 'exported' : 'downloadStarted', r.name));
   } catch (e) {
     setStatus(() => t('exportFail', e.message), true);
   }
@@ -140,6 +149,8 @@ export function dbSignature(d = state.db) {
     return null; // unknown: it will be treated as "with changes"
   }
 }
+
+const UNSAVED = '!unsaved'; // never equal to a real signature
 
 function hasUnsavedChanges() {
   if (!state.db || state.savedSignature === null) return false;
