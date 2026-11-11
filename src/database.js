@@ -58,7 +58,7 @@ function openFile(file, confirmed = false) {
       // checks that it is a valid database before replacing the current one
       newDb.exec('SELECT 1 FROM sqlite_master LIMIT 1');
       useDatabase(newDb, file.name || 'base.sqlite');
-      setStatus(() => t('loaded', state.fileName, state.objects.length));
+      setStatus(() => t(state.objects.length === 1 ? 'loadedOne' : 'loaded', state.fileName, state.objects.length));
     } catch (e) {
       setStatus(() => t('openFail', e.message), true);
     }
