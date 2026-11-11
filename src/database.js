@@ -154,11 +154,10 @@ export function dbSignature(d = state.db) {
 const UNSAVED = '!unsaved'; // never equal to a real signature
 const BASE_TITLE = document.title;
 
-/* Shows whether there are changes that have not been exported: badge next to the database
-   name, highlighted Export button and a mark in the tab title (never colour alone) */
+/* Shows whether there are changes that have not been exported: highlighted Export button
+   (with an accessible name and tooltip) and a mark in the tab title */
 export function updateUnsavedIndicator() {
   const dirty = !!state.db && hasUnsavedChanges();
-  $('db-unsaved').hidden = !dirty;
   const b = $('btn-export');
   b.classList.toggle('dirty', dirty);
   if (dirty) {
