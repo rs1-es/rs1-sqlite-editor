@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 import { refreshSchema } from './schema.js';
 import { saveBlob } from './save.js';
 import { state } from './state.js';
-import { setStatus } from './status.js';
+import { onStatusChange, setStatus } from './status.js';
 import { switchTab } from './tabs.js';
 import { keepHistoryAcross } from './undo.js';
 import { $ } from './util.js';
@@ -43,6 +43,7 @@ export function useDatabase(newDb, name) {
   refreshSchema();
   $('sidebar').classList.add('open');
   switchTab('data');
+  updateUnsavedIndicator();
   $('welcome').hidden = false;
   $('table-view').hidden = true;
   $('sql-view').hidden = true;
@@ -151,6 +152,26 @@ export function dbSignature(d = state.db) {
 }
 
 const UNSAVED = '!unsaved'; // never equal to a real signature
+const BASE_TITLE = document.title;
+
+/* Shows whether there are changes that have not been exported: badge next to the database
+   name, highlighted Export button and a mark in the tab title (never colour alone) */
+export function updateUnsavedIndicator() {
+  const dirty = !!state.db && hasUnsavedChanges();
+  $('db-unsaved').hidden = !dirty;
+  const b = $('btn-export');
+  b.classList.toggle('dirty', dirty);
+  if (dirty) {
+    b.title = t('unsavedTip');
+    b.setAttribute('aria-label', `${t('exportBtn')} – ${t('unsavedBadge')}`); // keeps the visible text in the name
+  } else {
+    b.title = t('exportBtn');
+    b.removeAttribute('aria-label');
+  }
+  document.title = dirty ? '• ' + BASE_TITLE : BASE_TITLE;
+}
+
+onStatusChange(updateUnsavedIndicator);
 
 function hasUnsavedChanges() {
   if (!state.db || state.savedSignature === null) return false;

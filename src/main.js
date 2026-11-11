@@ -11,7 +11,7 @@ import './table-actions.js';
 import './tabs.js';
 import './theme.js';
 import { fillFilterCols, renderBadge, renderRows } from './data-view.js';
-import { init } from './database.js';
+import { init, updateUnsavedIndicator } from './database.js';
 import { lang, t, toggleLang } from './i18n.js';
 import { renderHelp } from './help.js';
 import { renderSchema } from './schema.js';
@@ -35,6 +35,7 @@ function applyI18n() {
   $('btn-lang').setAttribute('aria-label', `${$('btn-lang').textContent} – ${t('langTooltip')}`);
   renderStatus();
   renderHelp();
+  updateUnsavedIndicator();
   if (state.db) {
     renderSchema();
     if (state.current) { fillFilterCols(); renderBadge(); renderRows(); }
