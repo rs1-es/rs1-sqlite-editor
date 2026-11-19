@@ -2,6 +2,7 @@ import { t } from './i18n.js';
 import { setPageSize, sizeOptions } from './paging.js';
 import { renderSchema } from './schema.js';
 import { state } from './state.js';
+import { fold, isAscii } from './sql-functions.js';
 import { clearStatus } from './status.js';
 import { switchTab } from './tabs.js';
 import { updateUndoButtons } from './undo.js';
@@ -77,11 +78,19 @@ export function buildListQuery(includeRowid) {
     const target = state.filterCol
       ? [state.filterCol]
       : (state.hasRowid ? ['rowid'] : []).concat(state.columns.map(c => c.name));
-    const like = '%' + state.filterText.replace(/[\\%_]/g, '\\$&') + '%';
-    where = ' WHERE ' + target.map(n => {
-      params.push(like);
-      return `CAST(${n === 'rowid' && state.hasRowid ? 'rowid' : qi(n)} AS TEXT) LIKE ? ESCAPE '\\'`;
-    }).join(' OR ');
+    const colExpr = n => `CAST(${n === 'rowid' && state.hasRowid ? 'rowid' : qi(n)} AS TEXT)`;
+    if (isAscii(state.filterText)) {
+      const like = '%' + state.filterText.replace(/[\\%_]/g, '\\$&') + '%';
+      where = ' WHERE ' + target.map(n => {
+        params.push(like);
+        return `${colExpr(n)} LIKE ? ESCAPE '\\'`;
+      }).join(' OR ');
+    } else {
+      // LIKE only ignores case for ASCII letters. For ñ, á… use a JS function, called once per row
+      // on all the searched columns joined with a separator that can't be typed (char(1))
+      params.push(fold(state.filterText));
+      where = ` WHERE rs1_contains(${target.map(n => `COALESCE(${colExpr(n)}, '')`).join(" || char(1) || ")}, ?)`;
+    }
   }
   const orderBy = state.sortCol
     ? ` ORDER BY ${state.sortCol === 'rowid' ? 'rowid' : qi(state.sortCol)} ${state.sortDir}` : '';

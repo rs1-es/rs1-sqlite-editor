@@ -2,6 +2,7 @@ import { importCsvFile } from './csv-import.js';
 import { t } from './i18n.js';
 import { refreshSchema } from './schema.js';
 import { saveBlob } from './save.js';
+import { registerSqlFunctions } from './sql-functions.js';
 import { state } from './state.js';
 import { onStatusChange, setIdleProvider, setStatus } from './status.js';
 import { switchTab } from './tabs.js';
@@ -26,6 +27,7 @@ export async function init() {
 /* Makes a database (opened or new) the active one and resets the interface */
 export function useDatabase(newDb, name) {
   if (state.db) state.db.close();
+  registerSqlFunctions(newDb);
   state.db = newDb;
   state.savedSignature = dbSignature();
   state.fileName = name;
@@ -118,7 +120,11 @@ $('btn-export').addEventListener('click', async () => {
     const wasDirty = hasUnsavedChanges();
     // db.export() reopens the database, which resets SQLite's change counter: tell the undo
     // history, and keep in mind that the signature is no longer comparable with the old one
-    const data = keepHistoryAcross(() => state.db.export());
+    const data = keepHistoryAcross(() => {
+      const bytes = state.db.export();
+      registerSqlFunctions(state.db); // export reopens the database and drops custom functions
+      return bytes;
+    });
     const sig = dbSignature();
     const blob = new Blob([data], { type: 'application/x-sqlite3' });
     const r = await saveBlob(blob, state.fileName, 'application/x-sqlite3', ['.sqlite', '.sqlite3', '.db', '.db3']);
