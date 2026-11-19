@@ -11,8 +11,11 @@ const tableContainer = $('table-container');
 
 function startEdit(td) {
   if (td.dataset.locked || state.current.type !== 'table' || !state.hasRowid) return;
-  td.dataset.original = td.textContent;
+  const wasNull = !!td.querySelector('.null');
+  // the "NULL" label is not a value: a NULL cell is edited as an empty field (shown with a placeholder)
+  td.dataset.original = wasNull ? '' : td.textContent;
   td.dataset.originalHtml = td.innerHTML;
+  if (wasNull) { td.textContent = ''; td.classList.add('editing-null'); }
   td.contentEditable = 'true';
   td.focus();
   const range = document.createRange();
@@ -95,6 +98,7 @@ tableContainer.addEventListener('focusout', e => {
   const td = e.target.closest('td.cell[contenteditable="true"]');
   if (!td) return;
   td.contentEditable = 'false';
+  td.classList.remove('editing-null');
   const newVal = td.textContent;
   const refocus = !!td.dataset.refocus;
   delete td.dataset.refocus;
@@ -105,7 +109,11 @@ tableContainer.addEventListener('focusout', e => {
     back();
     return;
   }
-  if (newVal === td.dataset.original) { back(); return; }
+  if (newVal === td.dataset.original) {
+    td.innerHTML = td.dataset.originalHtml; // unchanged (a NULL cell shows its NULL label again)
+    back();
+    return;
+  }
   state.refocusCell = refocus;
   commitCell(td, newVal);
 });

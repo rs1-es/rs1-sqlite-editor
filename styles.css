@@ -453,6 +453,9 @@ td.cell[contenteditable="true"] {
 
 td .null { color: var(--muted); font-style: italic; }
 
+/* a NULL cell being edited is an empty field; the placeholder is not part of the text */
+td.editing-null:empty::before { content: 'NULL'; color: var(--muted); font-style: italic; pointer-events: none; }
+
 td .blob { color: var(--muted); }
 
 /* ---------- New record row ---------- */
