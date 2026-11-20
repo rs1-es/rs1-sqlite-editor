@@ -11,7 +11,7 @@ Live version: <https://sqlite.rs1.es>
 - Open a database (`.sqlite`, `.sqlite3`, `.db`, `.db3`, drag and drop also works), create a
   new one and export the modified file. Changes are kept in memory until you export.
 - Browse tables and views with pagination, column sorting and text search (across all
-  columns or a single one).
+  columns or a single one) that ignores case and accents.
 - Edit cells by double-clicking or from the keyboard (arrow keys to move, Enter/F2 to edit, Escape to cancel, Delete to set NULL), add and delete rows.
 - Create tables with a dialog, rename them, drop them and change their structure.
 - SQL tab to run statements (Ctrl+Enter), with sortable, paginated results.

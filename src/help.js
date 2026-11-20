@@ -15,7 +15,7 @@ const HELP = {
     { title: 'Browsing data', items: [
       'Pick a table or view in the list on the left (the `☰` button shows it on small screens).',
       'Click a column header (or press `Enter` on it) to sort; click again to reverse the order.',
-      'Use the search box to filter rows, in all columns or in one you choose.',
+      'Use the search box to filter rows, in all columns or in one you choose. It ignores case and accents (but "ñ" is not "n").',
       'Use the pager under the table to change page, and choose how many rows to show per page.'] },
     { title: 'Editing cells', items: [
       '**Double-click** a cell to edit it, or move to it with the arrow keys and press `Enter` or `F2`.',
@@ -57,7 +57,7 @@ const HELP = {
     { title: 'Ver datos', items: [
       'Elige una tabla o vista en la lista de la izquierda (el botón `☰` la muestra en pantallas pequeñas).',
       'Pulsa el encabezado de una columna (o `Enter` sobre él) para ordenar; púlsalo de nuevo para invertir el orden.',
-      'Usa el cuadro de búsqueda para filtrar filas, en todas las columnas o en la que elijas.',
+      'Usa el cuadro de búsqueda para filtrar filas, en todas las columnas o en la que elijas. No distingue mayúsculas ni acentos (pero «ñ» no es «n»).',
       'Usa el paginador bajo la tabla para cambiar de página y elegir cuántas filas mostrar por página.'] },
     { title: 'Editar celdas', items: [
       '**Haz doble clic** en una celda para editarla, o muévete con las flechas y pulsa `Enter` o `F2`.',
